@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/ruby4knime_0.0.1.qualifier.jar" id="ruby4knime" version="0.0.1.qualifier">
+      <category name="ruby_scripting_extension"/>
+   </feature>
+   <category-def name="ruby_scripting_extension" label="KNIME Ruby scripting extension"/>
+</site>
