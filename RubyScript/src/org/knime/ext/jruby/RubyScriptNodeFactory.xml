@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<knimeNode icon="./ruby_16.png" type="Manipulator" xmlns="http://knime.org/node/v2.8" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://knime.org/node/v2.8 http://knime.org/node/v2.8.xsd">
+    <name>RubyScript</name>
+
+    <shortDescription>
+      This package implements Ruby scripts.
+
+      Currently employs jRuby v1.7.9 with Ruby 2.0 syntax.
+    </shortDescription>
+
+    <fullDescription>
+        <intro>Executes a jRuby script, taking 1 input DataTable and returning 1 output DataTable. A simple example script is included in the dialog's text window of the Script tab.
+          <p>This node uses Ruby-wrapper. See knime.rb at <a href="https://github.com/rssdev10/ruby4knime">ruby4knime</a></p>
+
+          <p>Also you can include additional gems from an external jRuby installation. But before setup jRuby path in preferences.</p>
+
+       </intro>
+
+        <tab name="Script output">
+          <option name="Append columns to input table spec">If checked, the columns as given in the list are appended to the input table specification, i.e. the number of columns in the output table equals the number of input columns plus the number of columns as given in the list. If unchecked, the output table will have as many columns as given in the list.</option>
+          <option name="Column list">Specify the column name and type of all result columns. After adding a new column, click on the name or type to change its value.</option>
+        </tab>
+
+        <tab name="Script">
+          <option name="$inData0">The input DataTable containing all available input from input port 0.</option>
+          <option name="$outContainer">Output container housing the outgoing DataTable for output port 0. This must be populated with rows by the script or else there will be no output from the node.</option>
+
+          <option name="Example use to copy all input row of DataTable:"><pre>
+  $inData0.each do |row|
+    $outContainer &lt;&lt; row
+  end
+          </pre></option>
+          <option name="Example use to extend input rows by new columns:"><pre>
+  count = $inData0.length
+  $inData0.each_with_index do |row, i|
+    $outContainer &lt;&lt; (row &lt;&lt; Cells.new.string('Hi!').int(row.getCell(0).to_s.length))
+    setProgress "#{i*100/count}%" if i%100 != 0
+  end
+          </pre></option>
+
+          <option name="Example use to create new DataTable from custom data:"><pre>
+  $inData0.each do |row|
+    $outContainer &lt;&lt; Cells.new.string(row.getCell(0).to_s.length.to_s)
+  end
+          </pre></option>
+        </tab>
+
+    </fullDescription>
+
+    <ports>
+        <inPort index="0" name="In-Port name">Table that the Ruby script will operate on.</inPort>
+        <!-- possibly more input ports here-->
+        <outPort index="0" name="Out-Port name">Table containing the results of the Ruby script.</outPort>
+        <!-- possibly more output ports here-->
+    </ports>
+</knimeNode>

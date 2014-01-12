@@ -1,0 +1,42 @@
+<!--
+====================================================================
+This source code, its documentation and all appendant files
+are protected by copyright law. All rights reserved.
+
+Copyright, 2014 
+
+
+You may not modify, publish, transmit, transfer or sell, reproduce,
+create derivative works from, distribute, perform, display, or in 
+any way exploit any of the content, in whole or in part, except as 
+otherwise expressly permitted in writing by the copyright owner.
+====================================================================
+-->
+<body>
+This package implements Ruby scripts. It is possible to 
+
+
+Example. Copy all input rows in output.
+<code>
+$inData0.each do |row| 
+   $outContainer << row
+end
+</code>
+
+<code>
+count = $inData0.length
+$inData0.each_with_index do |row,i|
+   $outContainer << row.string('Hi!').int(row.getCell(0).to_s.length).append
+   setProgress "#{i*100/count}%" if i%100 != 0
+end
+</code>
+
+<p>
+The <code>RubyScriptModel</code> cannot predefined columns.
+<p>
+The <code>RubyScriptDialog</code> allows loading and editing of Ruby script.
+<p>
+More comments ...
+<br>
+
+</body>

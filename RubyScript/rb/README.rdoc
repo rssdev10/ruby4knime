@@ -1,0 +1,44 @@
+= Ruby4Knime
+
+Ruby4Knime is realization of a special node type for http://knime.org that allow to use Ruby scripts for interactive data analytic.
+The main aims of this project are
+* provide possibility to use Ruby language for interactive data analysis;
+* make the analysis more effective using clear and laconic Ruby style.
+
+knime.rb is the simple wrapper that allows to use Knime classes written in Java in the Ruby programming style.
+
+= Simple examples
+These samples illustrate how to generate output data from input data of the node.
+
+== Copy existing rows
+
+  $inData0.each do |row|
+    $outContainer << row
+  end
+
+== Add new two columns with String and Int types
+This example also illustrates the progress state updating.
+
+  count = $inData0.length
+  $inData0.each_with_index do |row, i|
+    $outContainer << (row << Cells.new.string('Hi!').int(row.getCell(0).to_s.length))
+    setProgress "#{i*100/count}%" if i%100 != 0
+  end
+
+== Create new rows
+In this example new rows creates with new uniq rowkeys. Therefore it is possible to create output table with any number of rows.
+  $inData0.each do |row|
+    $outContainer << Cells.new.string(row.getCell(0).to_s.length.to_s)
+  end
+
+== Other experiments
+Samples that add new cells in functional style.
+  count = $inData0.length
+  $inData0.each_with_index do |row,i|
+    $outContainer << row.string('Hi!').int(row.getCell(0).to_s.length).append
+    setProgress "#{i*100/count}%" if i%100 != 0
+  end
+
+  $inData0.each do |row|
+    $outContainer << $outContainer.createRowKey.stringCell(row.getCell(0).to_s.length.to_s).new_row
+  end

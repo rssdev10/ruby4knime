@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin>
+
+   <!-- This is an example for providing an own category 
+      <extension
+         point="org.knime.workbench.repository.categories">
+      <category
+            description="Category containing my nodes"
+            icon="icons/default.png"
+            level-id="myNodes"
+            name="My nodes"
+            path="/"/>
+   </extension>
+   -->
+
+   <extension
+         point="org.knime.workbench.repository.nodes">
+      <node
+            category-path="/community"
+            factory-class="org.knime.ext.jruby.RubyScriptNodeFactory"
+            id="org.knime.ext.jruby.RubyScriptNodeFactory"/>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="org.knime.ext.jruby.preferences.RubyScriptPreferencePage"
+            id="org.knime.ext.jruby.preferences.RubyScriptPreferencePage"
+            category="org.knime.workbench.ui.preferences"
+            icon="ruby_16.png"
+            name="Ruby scripting">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="org.knime.ext.jruby.preferences.PreferenceInitializer">
+      </initializer>
+   </extension>
+
+</plugin>
