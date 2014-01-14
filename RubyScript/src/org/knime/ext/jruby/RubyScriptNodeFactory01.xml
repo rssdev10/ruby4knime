@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<knimeNode icon="./ruby_16.png" type="Source" xmlns="http://knime.org/node/v2.8" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://knime.org/node/v2.8 http://knime.org/node/v2.8.xsd">
+    <name>Ruby Generator</name>
+
+    <shortDescription>
+      This node implements Ruby scripts for data generation only.
+
+      Currently employs jRuby v1.7.9 with Ruby 2.0 syntax.
+    </shortDescription>
+
+    <fullDescription>
+        <intro>
+        	Executes a jRuby script, returning 1 output DataTable. This node allow to generate any data or process data from external sources like files, RSS-feeds, HTTP and other Ruby-sources.
+        	A simple example script is included in the dialog's text window of the Script tab.
+          <p>This node uses Ruby-wrapper. See knime.rb at <a href="https://github.com/rssdev10/ruby4knime">ruby4knime</a></p>
+
+          <p>Also you can include additional gems from an external jRuby installation. But before setup jRuby path in preferences.</p>
+          <p>Please specify Column list before using.</p>
+       </intro>
+
+        <tab name="Script output">
+          <option name="Column list">Specify the column name and type of all result columns. After adding a new column, click on the name or type to change its value.</option>
+        </tab>
+
+        <tab name="Script">
+          <option name="$outContainer">Output container housing the outgoing DataTable for output port 0. This must be populated with rows by the script or else there will be no output from the node.</option>
+
+          <option name="Example use create DataTable with two columns:"><pre>
+  count = 10000
+  count.times do |i|
+    $outContainer &lt;&lt; Cells.new.string('Hi!').int(rand i))
+    setProgress "#{i*100/count}%" if i%100 != 0
+  end
+          </pre></option>
+        </tab>
+
+    </fullDescription>
+
+    <ports>
+        <outPort index="0" name="Out-Port name">Table containing the results of the Ruby script.</outPort>
+        <!-- possibly more output ports here-->
+    </ports>
+</knimeNode>

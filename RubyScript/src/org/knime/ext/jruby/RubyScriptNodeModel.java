@@ -78,41 +78,60 @@ public class RubyScriptNodeModel extends NodeModel {
 
 		buffer = new StringBuffer();
 		buffer.append("# Available scripting variables:\n");
-		buffer.append("#     inData0 - input DataTable 0\n");
-		if (numInputs == 2) {
-			buffer.append("#     inData1 - input DataTable 1\n");
+		for (int i=0; i<numInputs; i++) {
+			buffer.append(String.format(
+					"#     inData%d - input DataTable %d\n", i, i + 1));
+		}		
+		
+		if (numInputs > 0) {
+			buffer.append("#     outContainer - container housing output DataTable\n");
+			buffer.append("#\n");
+			buffer.append("# Example starter script. Add values for new two columns with String and Int types:\n");
+			buffer.append("#\n");
+			buffer.append("# count = $inData0.length\n");
+			buffer.append("# $inData0.each_with_index do |row, i|\n");
+			buffer.append("#     $outContainer << row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n");
+			buffer.append("#     setProgress \"#{i*100/count}%\" if i%100 != 0\n");
+			buffer.append("# end\n");
+			buffer.append("#\n");
+			buffer.append("# Default script:\n");
+			buffer.append("#\n\n");
+			buffer.append("$inData0.each do |row|\n");
+			buffer.append("    $outContainer << row\n");
+			buffer.append("end");
+		} else {
+			buffer.append("#     outContainer - container housing output DataTable\n");
+			buffer.append("#\n");
+			buffer.append("# Example starter script. Add values for new two columns with String and Int types:\n");
+			buffer.append("#\n");
+			buffer.append("# count = 100000\n");
+			buffer.append("# count.times do |i|\n");
+			buffer.append("#     $outContainer << Cells.new.string('Hi!').int(rand i))\n");
+			buffer.append("#     setProgress \"#{i*100/count}%\" if i%100 != 0\n");
+			buffer.append("# end\n");
+			buffer.append("#\n");
+			buffer.append("# Default script:\n");
+			buffer.append("#\n\n");
+			
+			buffer.append("10.times do |i|\n");
+			buffer.append("    $outContainer << Cells.new.int(i)\n");
+			buffer.append("end");
 		}
-		buffer.append("#     outContainer - container housing output DataTable\n");
-		buffer.append("#\n");
-		buffer.append("# Example starter script. Add values for new two columns with String and Int types:\n");
-		buffer.append("#\n");
-		buffer.append("# count = $inData0.length\n");
-		buffer.append("# $outContainer << (row << Cells.new.string('Hi!').int(row.getCell(0).to_s.length))");
-		buffer.append("#     $outContainer << row.string('Hi!').int(row.getCell(0).to_s.length).append\n");
-		buffer.append("#     setProgress \"#{i*100/count}%\" if i%100 != 0\n");
-		buffer.append("# end\n");
-		buffer.append("#\n");
-		buffer.append("# Default script:\n");
-		buffer.append("#\n");
-		buffer.append("$inData0.each do |row|\n");
-		buffer.append("    $outContainer << row\n");
-		buffer.append("end");		
-
 		script = buffer.toString();
 	}
 
 	protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
 			final ExecutionContext exec) throws CanceledExecutionException,
 			Exception {
-		BufferedDataTable in = inData[0];
-		BufferedDataTable in2 = null;
-		if (numInputs == 2) {
-			in2 = inData[1];
+
+		BufferedDataTable[] in = (numInputs > 0 ? new BufferedDataTable[numInputs] : null);
+
+		for (int i=0; i<numInputs; i++) {
+			in[i] = inData[i];
 		}
 
 		// construct the output data table specs and the output containers
-		DataTableSpec[] outSpecs = configure(new DataTableSpec[] { in
-				.getDataTableSpec() });
+		DataTableSpec[] outSpecs = configure( in != null ? new DataTableSpec[] { in[0].getDataTableSpec() } : null);
 		DataContainer outContainer = new DataContainer(outSpecs[0]);
 		DataContainer outContainer2 = null;
 		if (numOutputs == 2) {
@@ -188,10 +207,10 @@ public class RubyScriptNodeModel extends NodeModel {
 		container.setError(new LoggerOutputStream(logger,
 				NodeLogger.LEVEL.ERROR));
 
-		container.put("$inData0", in);
-		if (numInputs == 2) {
-			container.put("$inData1", in2);
-		}
+		for (int i=0; i<numInputs; i++) {
+			container.put( String.format("$inData%i", i), in[i]);
+		}		
+
 		container.put("$outContainer", outContainer);
 		container.put("$outColumnNames", columnNames);
 		container.put("$outColumnTypes", columnTypes);
@@ -220,6 +239,7 @@ public class RubyScriptNodeModel extends NodeModel {
 	 */
 	protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
 			throws InvalidSettingsException {
+		appendCols &= numInputs > 0;
 		// append the property columns to the data table spec
 		DataTableSpec newSpec = appendCols ? inSpecs[0] : new DataTableSpec();
 

@@ -2,24 +2,33 @@
 <?eclipse version="3.0"?>
 <plugin>
 
-   <!-- This is an example for providing an own category 
-      <extension
+   <extension
          point="org.knime.workbench.repository.categories">
       <category
-            description="Category containing my nodes"
-            icon="icons/default.png"
-            level-id="myNodes"
-            name="My nodes"
-            path="/"/>
+            description="Ruby Scripting"
+            level-id="RubyScripting"
+            name="Ruby Scripting"
+            icon="icons/ruby_16.png"
+            path="/community"/>
    </extension>
    -->
 
    <extension
          point="org.knime.workbench.repository.nodes">
       <node
-            category-path="/community"
+            category-path="/community/RubyScripting"
             factory-class="org.knime.ext.jruby.RubyScriptNodeFactory"
-            id="org.knime.ext.jruby.RubyScriptNodeFactory"/>
+            id="org.knime.ext.jruby.RubyScriptNodeFactory"
+            icon="ruby_16.png"/>
+   </extension>
+
+   <extension
+         point="org.knime.workbench.repository.nodes">
+      <node
+            category-path="/community/RubyScripting"
+            factory-class="org.knime.ext.jruby.RubyScriptNodeFactory01"
+            id="org.knime.ext.jruby.RubyScriptNodeFactory01"
+            icon="ruby_16.png"/>
    </extension>
 
    <extension

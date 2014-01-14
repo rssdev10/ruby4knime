@@ -53,5 +53,4 @@ public class RubyScriptNodeFactory
     public NodeDialogPane createNodeDialogPane() {
         return new RubyScriptNodeDialog();
     }
-
 }
