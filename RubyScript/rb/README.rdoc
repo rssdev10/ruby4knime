@@ -31,6 +31,11 @@ In this example new rows creates with new uniq rowkeys. Therefore it is possible
     $outContainer << Cells.new.string(row.getCell(0).to_s.length.to_s)
   end
 
+In this example cell 0 copies without changes and adds difference between cells with indexes 1 and 2. Index in Ruby style.
+  $inData0.each do |row|
+    $outContainer << Cells.new.int(row[0].to_i).double(row[1].to_f - row[2].to_f)
+  end
+
 == Other experiments
 Samples that add new cells in functional style.
   count = $inData0.length
