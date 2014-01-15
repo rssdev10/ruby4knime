@@ -30,6 +30,15 @@
             id="org.knime.ext.jruby.RubyScriptNodeFactory01"
             icon="ruby_16.png"/>
    </extension>
+   
+   <extension
+         point="org.knime.workbench.repository.nodes">
+      <node
+            category-path="/community/RubyScripting"
+            factory-class="org.knime.ext.jruby.RubyScriptNodeFactory22"
+            id="org.knime.ext.jruby.RubyScriptNodeFactory22"
+            icon="ruby_16.png"/>
+   </extension>   
 
    <extension
          point="org.eclipse.ui.preferencePages">
