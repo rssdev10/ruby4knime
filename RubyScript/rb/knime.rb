@@ -41,8 +41,34 @@ module Knime
   def setProgress *val
     $exec.setProgress *val
   end
+
+  # module with methods for DataCell conversations
+  module DataConverter
+    # convert to double
+    def to_f; getDoubleValue(); end
+    # convert to integer
+    def to_i; getIntValue(); end
+    # convert to long
+    def to_l; getLongValue(); end
+  end
 end
 include Knime
+
+# Extended knime class
+class DoubleCell
+  include DataConverter
+end
+
+# Extended knime class
+class IntCell
+  include DataConverter
+end
+
+# Extended knime class
+class LongCell
+  include DataConverter
+end
+
 
 # Extended knime class
 class Java::OrgKnimeCoreDataContainer::BlobSupportDataRow
@@ -56,6 +82,15 @@ class Java::OrgKnimeCoreDataContainer::BlobSupportDataRow
   # Append new columns by instance of Cell class
   def << cells
     AppendedColumnRow.new self, *cells.cells
+  end
+
+  # Get cells by index in Ruby style
+  def [] idx
+    if idx >= 0
+      getCell(idx)
+    else
+      getCell(getNumCells()+idx) # -1 - last element
+    end
   end
 end
 
@@ -92,6 +127,11 @@ class Java::OrgKnimeCoreDataContainer::DataContainer
     end
 
     addRowToTable row
+  end
+
+  # Set current number of row key.
+  def rowKey= num
+    @key = num
   end
 
   # Create uniq key for new row.
