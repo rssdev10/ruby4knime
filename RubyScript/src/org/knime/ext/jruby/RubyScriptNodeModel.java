@@ -124,18 +124,19 @@ public class RubyScriptNodeModel extends NodeModel {
 			final ExecutionContext exec) throws CanceledExecutionException,
 			Exception {
 
+		int i;
 		BufferedDataTable[] in = (numInputs > 0 ? new BufferedDataTable[numInputs] : null);
 
-		for (int i=0; i<numInputs; i++) {
+		for (i = 0; i < numInputs; i++) {
 			in[i] = inData[i];
 		}
 
 		// construct the output data table specs and the output containers
 		DataTableSpec[] outSpecs = configure( in != null ? new DataTableSpec[] { in[0].getDataTableSpec() } : null);
-		DataContainer outContainer = new DataContainer(outSpecs[0]);
-		DataContainer outContainer2 = null;
-		if (numOutputs == 2) {
-			outContainer2 = new DataContainer(outSpecs[1]);
+
+		DataContainer[] outContainer = new DataContainer[numOutputs];
+		for (i = 0; i < numOutputs; i++) {
+			outContainer[i] = new DataContainer(outSpecs[i]);
 		}
 
 		String fileSep = System.getProperty("file.separator");
@@ -195,7 +196,7 @@ public class RubyScriptNodeModel extends NodeModel {
 		// File(RubyScriptNodeModel.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
 
 		ScriptingContainer container = new ScriptingContainer(
-				LocalContextScope.CONCURRENT);
+				LocalContextScope.THREADSAFE);
 		container.setCompatVersion(CompatVersion.RUBY2_0);
 		container.setCompileMode(CompileMode.JIT);
 
@@ -207,11 +208,15 @@ public class RubyScriptNodeModel extends NodeModel {
 		container.setError(new LoggerOutputStream(logger,
 				NodeLogger.LEVEL.ERROR));
 
-		for (int i=0; i<numInputs; i++) {
-			container.put( String.format("$inData%i", i), in[i]);
-		}		
+		for (i=0; i<numInputs; i++) {
+			container.put( String.format("$inData%d", i), in[i]);
+		}
 
-		container.put("$outContainer", outContainer);
+		for (i = 0; i < numOutputs; i++) {
+			container.put(String.format("$outContainer%d", i), outContainer[i]);
+		}
+		container.put("$outContainer", outContainer[0]);
+
 		container.put("$outColumnNames", columnNames);
 		container.put("$outColumnTypes", columnTypes);
 		container.put("$exec", exec);
@@ -221,17 +226,13 @@ public class RubyScriptNodeModel extends NodeModel {
 				.parse(scriptHeader + script + scriptFooter, 1);
 		unit.run();
 
-		outContainer.close();
-		if (outContainer2 != null) {
-			outContainer2.close();
+		BufferedDataTable[] result = new BufferedDataTable[numOutputs];
+		for (i = 0; i < numOutputs; i++) {
+			outContainer[i].close();
+			result[i] = exec.createBufferedDataTable(
+					outContainer[i].getTable(), exec);
 		}
-		if (numOutputs == 2) {
-			return new BufferedDataTable[] {
-					exec.createBufferedDataTable(outContainer.getTable(), exec),
-					exec.createBufferedDataTable(outContainer.getTable(), exec) };
-		}
-		return new BufferedDataTable[] { exec.createBufferedDataTable(
-				outContainer.getTable(), exec) };
+		return result;
 	}
 
 	/**
@@ -268,10 +269,11 @@ public class RubyScriptNodeModel extends NodeModel {
 			script = "";
 		}
 
-		if (numOutputs == 2) {
-			return new DataTableSpec[] { newSpec, newSpec };
+		DataTableSpec[] result = new DataTableSpec[numOutputs];
+		for (int i = 0; i < numOutputs; i++) {
+			result[i] = newSpec;
 		}
-		return new DataTableSpec[] { newSpec };
+		return result;
 	}
 
 	/**
