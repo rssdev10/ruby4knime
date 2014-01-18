@@ -3,17 +3,16 @@ package org.knime.ext.jruby;
 /**
  * <code>NodeFactory</code> for the "RubyScript" Node.
  * 
- *
- * @author 
+ * 
+ * @author
  */
-public class RubyScriptNodeFactory01
-        extends RubyScriptNodeFactory {
+public class RubyScriptNodeFactory01 extends RubyScriptNodeFactory {
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public RubyScriptNodeModel createNodeModel() {
-        return new RubyScriptNodeModel(0,1);
+    public final RubyScriptNodeModel createNodeModel() {
+        return new RubyScriptNodeModel(0, 1);
     }
 }

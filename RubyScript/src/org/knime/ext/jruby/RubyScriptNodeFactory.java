@@ -7,25 +7,24 @@ import org.knime.core.node.NodeView;
 /**
  * <code>NodeFactory</code> for the "RubyScript" Node.
  * 
- *
- * @author 
+ * 
+ * @author
  */
-public class RubyScriptNodeFactory 
-        extends NodeFactory<RubyScriptNodeModel> {
+public class RubyScriptNodeFactory extends NodeFactory<RubyScriptNodeModel> {
 
     /**
      * {@inheritDoc}
      */
     @Override
     public RubyScriptNodeModel createNodeModel() {
-        return new RubyScriptNodeModel(1,1);
+        return new RubyScriptNodeModel(1, 1);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int getNrNodeViews() {
+    public final int getNrNodeViews() {
         return 1;
     }
 
@@ -33,7 +32,7 @@ public class RubyScriptNodeFactory
      * {@inheritDoc}
      */
     @Override
-    public NodeView<RubyScriptNodeModel> createNodeView(final int viewIndex,
+    public final NodeView<RubyScriptNodeModel> createNodeView(final int viewIndex,
             final RubyScriptNodeModel nodeModel) {
         return new RubyScriptNodeView(nodeModel);
     }
@@ -42,7 +41,7 @@ public class RubyScriptNodeFactory
      * {@inheritDoc}
      */
     @Override
-    public boolean hasDialog() {
+    public final boolean hasDialog() {
         return true;
     }
 
@@ -50,7 +49,7 @@ public class RubyScriptNodeFactory
      * {@inheritDoc}
      */
     @Override
-    public NodeDialogPane createNodeDialogPane() {
+    public final NodeDialogPane createNodeDialogPane() {
         return new RubyScriptNodeDialog();
     }
 }

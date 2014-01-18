@@ -10,16 +10,17 @@ import org.knime.ext.jruby.RubyScriptNodePlugin;
  */
 public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer#initializeDefaultPreferences()
-	 */
-	public void initializeDefaultPreferences() {
-		IPreferenceStore store = RubyScriptNodePlugin.getDefault().getPreferenceStore();
-		store.setDefault(PreferenceConstants.JRUBY_USE_EXTERNAL_GEMS, false);
-		store.setDefault(PreferenceConstants.JRUBY_PATH,
-				"");
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer#
+     * initializeDefaultPreferences()
+     */
+    public final void initializeDefaultPreferences() {
+        IPreferenceStore store = RubyScriptNodePlugin.getDefault()
+                .getPreferenceStore();
+        store.setDefault(PreferenceConstants.JRUBY_USE_EXTERNAL_GEMS, false);
+        store.setDefault(PreferenceConstants.JRUBY_PATH, "");
+    }
 
 }

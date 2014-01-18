@@ -46,307 +46,312 @@ import org.jruby.RubyInstanceConfig.CompileMode;
 
 public class RubyScriptNodeModel extends NodeModel {
 
-	public static final String SCRIPT = "script";
-	public static final String APPEND_COLS = "append_columns";
-	public static final String COLUMN_NAMES = "new_column_names";
-	public static final String COLUMN_TYPES = "new_column_types";
-	protected int numInputs = 0;
-	protected int numOutputs = 0;
+    public static final String SCRIPT = "script";
+    public static final String APPEND_COLS = "append_columns";
+    public static final String COLUMN_NAMES = "new_column_names";
+    public static final String COLUMN_TYPES = "new_column_types";
+    protected int numInputs = 0;
+    protected int numOutputs = 0;
 
-	// our logger instance
-	private static NodeLogger logger = NodeLogger
-			.getLogger(RubyScriptNodeModel.class);
-	protected String scriptHeader = "";
-	protected String scriptFooter = "";
-	protected String script = "";
-	protected boolean appendCols = true;
-	protected String[] columnNames;
-	protected String[] columnTypes;
-	private static String javaExtDirsExtensionsPath;
-	private static String javaClasspathExtensionsPath;
+    /**
+     * our logger instance.
+     */
+    private static NodeLogger logger = NodeLogger
+            .getLogger(RubyScriptNodeModel.class);
+    protected String scriptHeader = "";
+    protected String scriptFooter = "";
+    protected String script = "";
+    protected boolean appendCols = true;
+    protected String[] columnNames;
+    protected String[] columnTypes;
+    private static String javaExtDirsExtensionsPath;
+    private static String javaClasspathExtensionsPath;
 
-	protected RubyScriptNodeModel(int inNumInputs, int inNumOutputs) {
-		super(inNumInputs, inNumOutputs);
+    protected RubyScriptNodeModel(int inNumInputs, int inNumOutputs) {
+        super(inNumInputs, inNumOutputs);
 
-		this.numInputs = inNumInputs;
-		this.numOutputs = inNumOutputs;
+        this.numInputs = inNumInputs;
+        this.numOutputs = inNumOutputs;
 
-		// define the common imports string
-		StringBuffer buffer = new StringBuffer();
-		buffer.append("require PLUGIN_PATH+'/rb/knime.rb'\n");
-		scriptHeader = buffer.toString();
+        // define the common imports string
+        StringBuffer buffer = new StringBuffer();
+        buffer.append("require PLUGIN_PATH+'/rb/knime.rb'\n");
+        scriptHeader = buffer.toString();
 
-		buffer = new StringBuffer();
-		buffer.append("# Available scripting variables:\n");
-		for (int i=0; i<numInputs; i++) {
-			buffer.append(String.format(
-					"#     inData%d - input DataTable %d\n", i, i + 1));
-		}		
-		
-		if (numInputs > 0) {
-			buffer.append("#     outContainer - container housing output DataTable\n");
-			buffer.append("#\n");
-			buffer.append("# Example starter script. Add values for new two columns with String and Int types:\n");
-			buffer.append("#\n");
-			buffer.append("# count = $inData0.length\n");
-			buffer.append("# $inData0.each_with_index do |row, i|\n");
-			buffer.append("#     $outContainer << row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n");
-			buffer.append("#     setProgress \"#{i*100/count}%\" if i%100 != 0\n");
-			buffer.append("# end\n");
-			buffer.append("#\n");
-			buffer.append("# Default script:\n");
-			buffer.append("#\n\n");
-			buffer.append("$inData0.each do |row|\n");
-			buffer.append("    $outContainer << row\n");
-			buffer.append("end");
-		} else {
-			buffer.append("#     outContainer - container housing output DataTable\n");
-			buffer.append("#\n");
-			buffer.append("# Example starter script. Add values for new two columns with String and Int types:\n");
-			buffer.append("#\n");
-			buffer.append("# count = 100000\n");
-			buffer.append("# count.times do |i|\n");
-			buffer.append("#     $outContainer << Cells.new.string('Hi!').int(rand i))\n");
-			buffer.append("#     setProgress \"#{i*100/count}%\" if i%100 != 0\n");
-			buffer.append("# end\n");
-			buffer.append("#\n");
-			buffer.append("# Default script:\n");
-			buffer.append("#\n\n");
-			
-			buffer.append("10.times do |i|\n");
-			buffer.append("    $outContainer << Cells.new.int(i)\n");
-			buffer.append("end");
-		}
-		script = buffer.toString();
-	}
+        buffer = new StringBuffer();
+        buffer.append("# Available scripting variables:\n");
+        for (int i = 0; i < numInputs; i++) {
+            buffer.append(String.format(
+                    "#     inData%d - input DataTable %d\n", i, i + 1));
+        }
 
-	protected BufferedDataTable[] execute(final BufferedDataTable[] inData,
-			final ExecutionContext exec) throws CanceledExecutionException,
-			Exception {
+        if (numInputs > 0) {
+            buffer.append("#     outContainer - container housing output DataTable\n");
+            buffer.append("#\n");
+            buffer.append("# Example starter script. Add values for new two columns with String and Int types:\n");
+            buffer.append("#\n");
+            buffer.append("# count = $inData0.length\n");
+            buffer.append("# $inData0.each_with_index do |row, i|\n");
+            buffer.append("#     $outContainer << row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n");
+            buffer.append("#     setProgress \"#{i*100/count}%\" if i%100 != 0\n");
+            buffer.append("# end\n");
+            buffer.append("#\n");
+            buffer.append("# Default script:\n");
+            buffer.append("#\n\n");
+            buffer.append("$inData0.each do |row|\n");
+            buffer.append("    $outContainer << row\n");
+            buffer.append("end");
+        } else {
+            buffer.append("#     outContainer - container housing output DataTable\n");
+            buffer.append("#\n");
+            buffer.append("# Example starter script. Add values for new two columns with String and Int types:\n");
+            buffer.append("#\n");
+            buffer.append("# count = 100000\n");
+            buffer.append("# count.times do |i|\n");
+            buffer.append("#     $outContainer << Cells.new.string('Hi!').int(rand i))\n");
+            buffer.append("#     setProgress \"#{i*100/count}%\" if i%100 != 0\n");
+            buffer.append("# end\n");
+            buffer.append("#\n");
+            buffer.append("# Default script:\n");
+            buffer.append("#\n\n");
 
-		int i;
-		BufferedDataTable[] in = (numInputs > 0 ? new BufferedDataTable[numInputs] : null);
+            buffer.append("10.times do |i|\n");
+            buffer.append("    $outContainer << Cells.new.int(i)\n");
+            buffer.append("end");
+        }
+        script = buffer.toString();
+    }
 
-		for (i = 0; i < numInputs; i++) {
-			in[i] = inData[i];
-		}
+    protected final BufferedDataTable[] execute(final BufferedDataTable[] inData,
+            final ExecutionContext exec) throws CanceledExecutionException,
+            Exception {
 
-		// construct the output data table specs and the output containers
-		DataTableSpec[] outSpecs = configure( in != null ? new DataTableSpec[] { in[0].getDataTableSpec() } : null);
+        int i;
+        BufferedDataTable[] in = (numInputs > 0 ? new BufferedDataTable[numInputs]
+                : null);
 
-		DataContainer[] outContainer = new DataContainer[numOutputs];
-		for (i = 0; i < numOutputs; i++) {
-			outContainer[i] = new DataContainer(outSpecs[i]);
-		}
+        for (i = 0; i < numInputs; i++) {
+            in[i] = inData[i];
+        }
 
-		String fileSep = System.getProperty("file.separator");
+        // construct the output data table specs and the output containers
+        DataTableSpec[] outSpecs = configure(in != null ? new DataTableSpec[] { in[0]
+                .getDataTableSpec() } : null);
 
-		// construct all necessary paths
-		Bundle core = Platform.getBundle("org.knime.core");
-		String coreClassPath = core.getHeaders().get("Bundle-Classpath")
-				.toString();
-		String corePluginPath = FileLocator.resolve(
-				FileLocator.find(core, new Path("."), null)).getPath();
+        DataContainer[] outContainer = new DataContainer[numOutputs];
+        for (i = 0; i < numOutputs; i++) {
+            outContainer[i] = new DataContainer(outSpecs[i]);
+        }
 
-		Bundle base = Platform.getBundle("org.knime.base");
-		String baseClassPath = base.getHeaders().get("Bundle-Classpath")
-				.toString();
-		String basePluginPath = FileLocator.resolve(
-				FileLocator.find(base, new Path("."), null)).getPath();
+        String fileSep = System.getProperty("file.separator");
 
-		Bundle ruby = Platform.getBundle("org.knime.ext.jruby");
-		String rubyPluginPath = FileLocator.resolve(
-				FileLocator.find(ruby, new Path("."), null)).getPath();
+        // construct all necessary paths
+        Bundle core = Platform.getBundle("org.knime.core");
+        String coreClassPath = core.getHeaders().get("Bundle-Classpath")
+                .toString();
+        String corePluginPath = FileLocator.resolve(
+                FileLocator.find(core, new Path("."), null)).getPath();
 
-		// set up ext dirs
-		StringBuffer ext = new StringBuffer();
-		ext.append(basePluginPath + fileSep + "lib");
-		ext.append(corePluginPath + fileSep + "lib");
-		ext.append(getJavaExtDirsExtensionPath());
+        Bundle base = Platform.getBundle("org.knime.base");
+        String baseClassPath = base.getHeaders().get("Bundle-Classpath")
+                .toString();
+        String basePluginPath = FileLocator.resolve(
+                FileLocator.find(base, new Path("."), null)).getPath();
 
-		// set up the classpath
-		List<String> classpath = new ArrayList<String>();
-		for (String s : coreClassPath.split(",")) {
-			URL u = FileLocator.find(core, new Path(s), null);
-			if (u != null) {
-				classpath.add(FileLocator.resolve(u).getFile());
-			}
-		}
-		// this entry is necessary if KNIME is started from Eclipse SDK
-		classpath.add(corePluginPath + fileSep + "bin");
+        Bundle ruby = Platform.getBundle("org.knime.ext.jruby");
+        String rubyPluginPath = FileLocator.resolve(
+                FileLocator.find(ruby, new Path("."), null)).getPath();
 
-		for (String s : baseClassPath.split(",")) {
-			URL u = FileLocator.find(base, new Path(s), null);
-			if (u != null) {
-				classpath.add(FileLocator.resolve(u).getFile());
-			}
-		}
-		// this entry is necessary if KNIME is started from Eclipse SDK
-		classpath.add(basePluginPath + fileSep + "bin");
+        // set up ext dirs
+        StringBuffer ext = new StringBuffer();
+        ext.append(basePluginPath + fileSep + "lib");
+        ext.append(corePluginPath + fileSep + "lib");
+        ext.append(getJavaExtDirsExtensionPath());
 
-		classpath.add(getJavaClasspathExtensionPath());
+        // set up the classpath
+        List<String> classpath = new ArrayList<String>();
+        for (String s : coreClassPath.split(",")) {
+            URL u = FileLocator.find(core, new Path(s), null);
+            if (u != null) {
+                classpath.add(FileLocator.resolve(u).getFile());
+            }
+        }
+        // this entry is necessary if KNIME is started from Eclipse SDK
+        classpath.add(corePluginPath + fileSep + "bin");
 
-		if (RubyScriptNodePlugin.getDefault().getPreferenceStore()
-				.getBoolean(PreferenceConstants.JRUBY_USE_EXTERNAL_GEMS)) {
-			String str = RubyScriptNodePlugin.getDefault().getPreferenceStore()
-					.getString(PreferenceConstants.JRUBY_PATH);
-			System.setProperty("jruby.home", str);
-		}
+        for (String s : baseClassPath.split(",")) {
+            URL u = FileLocator.find(base, new Path(s), null);
+            if (u != null) {
+                classpath.add(FileLocator.resolve(u).getFile());
+            }
+        }
+        // this entry is necessary if KNIME is started from Eclipse SDK
+        classpath.add(basePluginPath + fileSep + "bin");
 
-		// File(RubyScriptNodeModel.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
+        classpath.add(getJavaClasspathExtensionPath());
 
-		ScriptingContainer container = new ScriptingContainer(
-				LocalContextScope.THREADSAFE);
-		container.setCompatVersion(CompatVersion.RUBY2_0);
-		container.setCompileMode(CompileMode.JIT);
+        if (RubyScriptNodePlugin.getDefault().getPreferenceStore()
+                .getBoolean(PreferenceConstants.JRUBY_USE_EXTERNAL_GEMS)) {
+            String str = RubyScriptNodePlugin.getDefault().getPreferenceStore()
+                    .getString(PreferenceConstants.JRUBY_PATH);
+            System.setProperty("jruby.home", str);
+        }
 
-		// Code for classpath inherited from jythonscript. It`s possible redundant paths.   
-		container.setLoadPaths(classpath);
+        // File(RubyScriptNodeModel.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
 
-		container.setOutput(new LoggerOutputStream(logger,
-				NodeLogger.LEVEL.INFO));
-		container.setError(new LoggerOutputStream(logger,
-				NodeLogger.LEVEL.ERROR));
+        ScriptingContainer container = new ScriptingContainer(
+                LocalContextScope.THREADSAFE);
+        container.setCompatVersion(CompatVersion.RUBY2_0);
+        container.setCompileMode(CompileMode.JIT);
 
-		for (i=0; i<numInputs; i++) {
-			container.put( String.format("$inData%d", i), in[i]);
-		}
+        // Code for classpath inherited from jythonscript. It`s possible
+        // redundant paths.
+        container.setLoadPaths(classpath);
 
-		for (i = 0; i < numOutputs; i++) {
-			container.put(String.format("$outContainer%d", i), outContainer[i]);
-		}
-		container.put("$outContainer", outContainer[0]);
+        container.setOutput(new LoggerOutputStream(logger,
+                NodeLogger.LEVEL.INFO));
+        container.setError(new LoggerOutputStream(logger,
+                NodeLogger.LEVEL.ERROR));
 
-		container.put("$outColumnNames", columnNames);
-		container.put("$outColumnTypes", columnTypes);
-		container.put("$exec", exec);
-		container.put("PLUGIN_PATH", rubyPluginPath);
+        for (i = 0; i < numInputs; i++) {
+            container.put(String.format("$inData%d", i), in[i]);
+        }
 
-		EvalUnit unit = container
-				.parse(scriptHeader + script + scriptFooter, 1);
-		unit.run();
+        for (i = 0; i < numOutputs; i++) {
+            container.put(String.format("$outContainer%d", i), outContainer[i]);
+        }
+        container.put("$outContainer", outContainer[0]);
 
-		BufferedDataTable[] result = new BufferedDataTable[numOutputs];
-		for (i = 0; i < numOutputs; i++) {
-			outContainer[i].close();
-			result[i] = exec.createBufferedDataTable(
-					outContainer[i].getTable(), exec);
-		}
-		return result;
-	}
+        container.put("$outColumnNames", columnNames);
+        container.put("$outColumnTypes", columnTypes);
+        container.put("$exec", exec);
+        container.put("PLUGIN_PATH", rubyPluginPath);
 
-	/**
-	 * {@inheritDoc}
-	 */
-	protected DataTableSpec[] configure(final DataTableSpec[] inSpecs)
-			throws InvalidSettingsException {
-		appendCols &= numInputs > 0;
-		// append the property columns to the data table spec
-		DataTableSpec newSpec = appendCols ? inSpecs[0] : new DataTableSpec();
+        EvalUnit unit = container
+                .parse(scriptHeader + script + scriptFooter, 1);
+        unit.run();
 
-		if (columnNames == null) {
-			return new DataTableSpec[] { newSpec };
-		}
+        BufferedDataTable[] result = new BufferedDataTable[numOutputs];
+        for (i = 0; i < numOutputs; i++) {
+            outContainer[i].close();
+            result[i] = exec.createBufferedDataTable(
+                    outContainer[i].getTable(), exec);
+        }
+        return result;
+    }
 
-		for (int i = 0; i < columnNames.length; i++) {
-			DataType type = StringCell.TYPE;
-			String columnType = columnTypes[i];
+    /**
+     * {@inheritDoc}
+     */
+    protected final DataTableSpec[] configure(final DataTableSpec[] inSpecs)
+            throws InvalidSettingsException {
+        appendCols &= numInputs > 0;
+        // append the property columns to the data table spec
+        DataTableSpec newSpec = appendCols ? inSpecs[0] : new DataTableSpec();
 
-			if ("String".equals(columnType)) {
-				type = StringCell.TYPE;
-			} else if ("Integer".equals(columnType)) {
-				type = IntCell.TYPE;
-			} else if ("Double".equals(columnType)) {
-				type = DoubleCell.TYPE;
-			}
-			DataColumnSpec newColumn = new DataColumnSpecCreator(
-					columnNames[i], type).createSpec();
+        if (columnNames == null) {
+            return new DataTableSpec[] { newSpec };
+        }
 
-			newSpec = AppendedColumnTable.getTableSpec(newSpec, newColumn);
-		}
+        for (int i = 0; i < columnNames.length; i++) {
+            DataType type = StringCell.TYPE;
+            String columnType = columnTypes[i];
 
-		if (script == null) {
-			script = "";
-		}
+            if ("String".equals(columnType)) {
+                type = StringCell.TYPE;
+            } else if ("Integer".equals(columnType)) {
+                type = IntCell.TYPE;
+            } else if ("Double".equals(columnType)) {
+                type = DoubleCell.TYPE;
+            }
+            DataColumnSpec newColumn = new DataColumnSpecCreator(
+                    columnNames[i], type).createSpec();
 
-		DataTableSpec[] result = new DataTableSpec[numOutputs];
-		for (int i = 0; i < numOutputs; i++) {
-			result[i] = newSpec;
-		}
-		return result;
-	}
+            newSpec = AppendedColumnTable.getTableSpec(newSpec, newColumn);
+        }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	protected void reset() {
-	}
+        if (script == null) {
+            script = "";
+        }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected void loadInternals(final File nodeInternDir,
-			final ExecutionMonitor exec) throws IOException,
-			CanceledExecutionException {
-		// Nothing to load.
-	}
+        DataTableSpec[] result = new DataTableSpec[numOutputs];
+        for (int i = 0; i < numOutputs; i++) {
+            result[i] = newSpec;
+        }
+        return result;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	protected void saveInternals(final File nodeInternDir,
-			final ExecutionMonitor exec) throws IOException,
-			CanceledExecutionException {
-		// no internals to save
-	}
+    /**
+     * {@inheritDoc}
+     */
+    protected void reset() {
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	protected void saveSettingsTo(final NodeSettingsWO settings) {
-		settings.addString(SCRIPT, script);
-		settings.addBoolean(APPEND_COLS, appendCols);
-		settings.addStringArray(COLUMN_NAMES, columnNames);
-		settings.addStringArray(COLUMN_TYPES, columnTypes);
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void loadInternals(final File nodeInternDir,
+            final ExecutionMonitor exec) throws IOException,
+            CanceledExecutionException {
+        // Nothing to load.
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	protected void loadValidatedSettingsFrom(final NodeSettingsRO settings)
-			throws InvalidSettingsException {
-		script = settings.getString(SCRIPT);
-		// since 1.3
-		appendCols = settings.getBoolean(APPEND_COLS, true);
-		columnNames = settings.getStringArray(COLUMN_NAMES);
-		columnTypes = settings.getStringArray(COLUMN_TYPES);
-	}
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    protected void saveInternals(final File nodeInternDir,
+            final ExecutionMonitor exec) throws IOException,
+            CanceledExecutionException {
+        // no internals to save
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	protected void validateSettings(final NodeSettingsRO settings)
-			throws InvalidSettingsException {
-		settings.getString(SCRIPT);
-		settings.getStringArray(COLUMN_NAMES);
-		settings.getStringArray(COLUMN_TYPES);
-	}
+    /**
+     * {@inheritDoc}
+     */
+    protected final void saveSettingsTo(final NodeSettingsWO settings) {
+        settings.addString(SCRIPT, script);
+        settings.addBoolean(APPEND_COLS, appendCols);
+        settings.addStringArray(COLUMN_NAMES, columnNames);
+        settings.addStringArray(COLUMN_TYPES, columnTypes);
+    }
 
-	public static void setJavaExtDirsExtensionPath(String path) {
-		javaExtDirsExtensionsPath = path;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    protected final void loadValidatedSettingsFrom(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
+        script = settings.getString(SCRIPT);
+        // since 1.3
+        appendCols = settings.getBoolean(APPEND_COLS, true);
+        columnNames = settings.getStringArray(COLUMN_NAMES);
+        columnTypes = settings.getStringArray(COLUMN_TYPES);
+    }
 
-	public static String getJavaExtDirsExtensionPath() {
-		return javaExtDirsExtensionsPath;
-	}
+    /**
+     * {@inheritDoc}
+     */
+    protected final void validateSettings(final NodeSettingsRO settings)
+            throws InvalidSettingsException {
+        settings.getString(SCRIPT);
+        settings.getStringArray(COLUMN_NAMES);
+        settings.getStringArray(COLUMN_TYPES);
+    }
 
-	public static void setJavaClasspathExtensionPath(String path) {
-		javaClasspathExtensionsPath = path;
-	}
+    public static void setJavaExtDirsExtensionPath(String path) {
+        javaExtDirsExtensionsPath = path;
+    }
 
-	public static String getJavaClasspathExtensionPath() {
-		return javaClasspathExtensionsPath;
-	}
+    public static String getJavaExtDirsExtensionPath() {
+        return javaExtDirsExtensionsPath;
+    }
+
+    public static void setJavaClasspathExtensionPath(String path) {
+        javaClasspathExtensionsPath = path;
+    }
+
+    public static String getJavaClasspathExtensionPath() {
+        return javaClasspathExtensionsPath;
+    }
 }
