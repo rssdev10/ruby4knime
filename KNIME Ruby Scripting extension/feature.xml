@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="ruby4knime"
+      id="ruby4knime.feature"
       label="Ruby Scripting Extension"
-      version="0.0.2.qualifier"
+      version="0.0.3.qualifier"
       license-feature="org.eclipse.platform"
       license-feature-version="3.7.2.v20120207-1839-9gF7UHPDFxGjd-PqDr2jX_4yKaumkoHTz04_q-q">
 
