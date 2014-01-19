@@ -40,7 +40,7 @@
 
           <option name="Example use to create new DataTable from custom data:"><pre>
   $inData0.each do |row|
-    $outContainer &lt;&lt; Cells.new.string(row.getCell(0).to_s.length.to_s)
+    $outContainer &lt;&lt; Cells.new.string(row[0].to_s.length.to_s)
   end
           </pre></option>
         </tab>

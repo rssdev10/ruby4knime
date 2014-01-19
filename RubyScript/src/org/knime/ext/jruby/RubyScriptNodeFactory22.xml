@@ -25,6 +25,7 @@
           <option name="$inData0">The input DataTable containing all available input from input port 0.</option>
           <option name="$inData1">The input DataTable containing all available input from input port 1.</option>
           <option name="$outContainer">Output container housing the outgoing DataTable for output port 0. This must be populated with rows by the script or else there will be no output from the node.</option>
+          <option name="$outContainer0">Output container housing the outgoing DataTable for output port 0. The same as $outContainer.</option>
           <option name="$outContainer1">Output container housing the outgoing DataTable for output port 1.</option>
 
           <option name="Example use to copy all input row of DataTable:"><pre>
@@ -42,7 +43,7 @@
 
           <option name="Example use to create new DataTable from custom data:"><pre>
   $inData0.each do |row|
-    $outContainer &lt;&lt; Cells.new.string(row.getCell(0).to_s.length.to_s)
+    $outContainer0 &lt;&lt; Cells.new.string(row[0].to_s.length.to_s)
   end
           </pre></option>
         </tab>
