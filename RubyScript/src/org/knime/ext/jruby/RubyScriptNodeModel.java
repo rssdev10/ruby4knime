@@ -61,21 +61,33 @@ public class RubyScriptNodeModel extends NodeModel {
     protected String scriptHeader = "";
     protected String scriptFooter = "";
     protected String script = "";
+    protected int scriptFirstLineNumber;
+    
     protected boolean appendCols = true;
     protected String[] columnNames;
     protected String[] columnTypes;
     private static String javaExtDirsExtensionsPath;
     private static String javaClasspathExtensionsPath;
+    
+    private boolean snippetMode;
 
-    protected RubyScriptNodeModel(int inNumInputs, int inNumOutputs) {
+    protected RubyScriptNodeModel(int inNumInputs, int inNumOutputs, boolean snippetMode) {
         super(inNumInputs, inNumOutputs);
 
         this.numInputs = inNumInputs;
         this.numOutputs = inNumOutputs;
+        this.snippetMode = snippetMode;
 
         // define the common imports string
         StringBuffer buffer = new StringBuffer();
         buffer.append("require PLUGIN_PATH+'/rb/knime.rb'\n");
+        scriptFirstLineNumber = 2;
+        
+        if (this.snippetMode == true ) {
+            buffer.append("func = ->(row) do \n");
+            scriptFirstLineNumber += 1;
+        }          
+        
         scriptHeader = buffer.toString();
 
         buffer = new StringBuffer();
@@ -84,42 +96,73 @@ public class RubyScriptNodeModel extends NodeModel {
             buffer.append(String.format(
                     "#     inData%d - input DataTable %d\n", i, i + 1));
         }
+        buffer.append("#     outContainer - container housing output DataTable"
+                + " (the same as outContainer0)\n");
 
-        if (numInputs > 0) {
-            buffer.append("#     outContainer - container housing output DataTable\n");
-            buffer.append("#\n");
-            buffer.append("# Example starter script. Add values for new two columns with String and Int types:\n");
-            buffer.append("#\n");
-            buffer.append("# count = $inData0.length\n");
-            buffer.append("# $inData0.each_with_index do |row, i|\n");
-            buffer.append("#     $outContainer << row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n");
-            buffer.append("#     setProgress \"#{i*100/count}%\" if i%100 != 0\n");
-            buffer.append("# end\n");
-            buffer.append("#\n");
-            buffer.append("# Default script:\n");
+        for (int i = 0; i < numOutputs; i++) {
+            buffer.append(String
+                    .format("#     outContainer%d - container housing output DataTable %d\n", i, i+1));
+        }
+        buffer.append("#\n");
+        
+        if (this.snippetMode) {
+            buffer.append("# Snippet intended for operations with one row.\n"
+                    + "# This code places in the special lambda function with argument named row.\n"
+                    + "# The lambda function must return the row by any available for Ruby ways.\n"
+                    + "#\n"
+                    + "# Example script. "
+                    + "Add new two columns with String and Int types from current row:\n"
+                    + "#   row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n"
+                    + "#\n");
+
+            buffer.append("# Default snippet (copy existing row):\n");
             buffer.append("#\n\n");
-            buffer.append("$inData0.each do |row|\n");
-            buffer.append("    $outContainer << row\n");
-            buffer.append("end");
+
+            buffer.append("  row");
+            
         } else {
-            buffer.append("#     outContainer - container housing output DataTable\n");
-            buffer.append("#\n");
-            buffer.append("# Example starter script. Add values for new two columns with String and Int types:\n");
-            buffer.append("#\n");
-            buffer.append("# count = 100000\n");
-            buffer.append("# count.times do |i|\n");
-            buffer.append("#     $outContainer << Cells.new.string('Hi!').int(rand i))\n");
-            buffer.append("#     setProgress \"#{i*100/count}%\" if i%100 != 0\n");
-            buffer.append("# end\n");
-            buffer.append("#\n");
-            buffer.append("# Default script:\n");
-            buffer.append("#\n\n");
+            if (numInputs > 0) {
+                buffer.append("# Example starter script. "
+                        + "Add values for new two columns with String and Int types:\n"
+                        + "#\n"
+                        + "# count = $inData0.length\n"
+                        + "# $inData0.each_with_index do |row, i|\n"
+                        + "#   $outContainer << "
+                        + "row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n"
+                        + "#   setProgress \"#{i*100/count}%\" if i%100 != 0\n"
+                        + "# end\n" + "#\n");
+               buffer.append("# Default script:\n");
+                buffer.append("#\n\n");
+                
+                buffer.append("$inData0.each do |row|\n");
+                buffer.append("    $outContainer << row\n");
+                buffer.append("end");
+            } else {
+                buffer.append("# Example starter script. " +
+                		"Add values for new two columns with String and Int types:\n");
+                buffer.append("#\n");
+                buffer.append("# count = 100000\n");
+                buffer.append("# count.times do |i|\n");
+                buffer.append("#   $outContainer << Cells.new.string('Hi!').int(rand i))\n");
+                buffer.append("#   setProgress \"#{i*100/count}%\" if i%100 != 0\n");
+                buffer.append("# end\n");
+                buffer.append("#\n");
+                buffer.append("# Default script:\n");
+                buffer.append("#\n\n");
 
-            buffer.append("10.times do |i|\n");
-            buffer.append("    $outContainer << Cells.new.int(i)\n");
-            buffer.append("end");
+                buffer.append("10.times do |i|\n");
+                buffer.append("    $outContainer << Cells.new.int(i)\n");
+                buffer.append("end");
+            }
         }
         script = buffer.toString();
+
+        if (this.snippetMode) {
+            buffer = new StringBuffer();
+            buffer.append("end\n");
+            buffer.append("snippetRunner &func\n");
+            scriptFooter = buffer.toString();
+        }        
     }
 
     protected final BufferedDataTable[] execute(final BufferedDataTable[] inData,
@@ -227,8 +270,8 @@ public class RubyScriptNodeModel extends NodeModel {
         container.put("$exec", exec);
         container.put("PLUGIN_PATH", rubyPluginPath);
 
-        EvalUnit unit = container
-                .parse(scriptHeader + script + scriptFooter, 1);
+        EvalUnit unit = container.parse(scriptHeader + script + scriptFooter,
+                scriptFirstLineNumber);
         unit.run();
 
         BufferedDataTable[] result = new BufferedDataTable[numOutputs];
@@ -353,5 +396,5 @@ public class RubyScriptNodeModel extends NodeModel {
 
     public static String getJavaClasspathExtensionPath() {
         return javaClasspathExtensionsPath;
-    }
+    }    
 }

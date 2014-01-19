@@ -41,6 +41,15 @@
    </extension>   
 
    <extension
+         point="org.knime.workbench.repository.nodes">
+      <node
+            category-path="/community/RubyScripting"
+            factory-class="org.knime.ext.jruby.RubySnippetNodeFactory"
+            id="org.knime.ext.jruby.RubySnippetNodeFactory"
+            icon="ruby_snippet_16.png"/>
+   </extension>
+
+   <extension
          point="org.eclipse.ui.preferencePages">
       <page
             class="org.knime.ext.jruby.preferences.RubyScriptPreferencePage"

@@ -6,13 +6,13 @@ package org.knime.ext.jruby;
  * 
  * @author
  */
-public class RubyScriptNodeFactory22 extends RubyScriptNodeFactory {
+public class RubySnippetNodeFactory extends RubyScriptNodeFactory {
 
     /**
      * {@inheritDoc}
      */
     @Override
     public final RubyScriptNodeModel createNodeModel() {
-        return new RubyScriptNodeModel(2, 2, false);
+        return new RubyScriptNodeModel(1, 1, true);
     }
 }
