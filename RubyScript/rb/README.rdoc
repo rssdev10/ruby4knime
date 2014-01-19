@@ -36,6 +36,24 @@ In this example cell 0 copies without changes and adds difference between cells 
     $outContainer << Cells.new.int(row[0].to_i).double(row[1].to_f - row[2].to_f)
   end
 
+
+== Ruby Snippet examples
+Ruby snippet realizes as the body of a lambda-function in the following template:
+  func = ->(row) do
+    <<SNIPPET CODE>>
+  end
+  snippetRunner &func
+
+=== Simple snippet examples
+Copy all rows without changes. Code may contains only row-variable.
+
+  row
+
+Add difference between columns:
+
+  row << Cells.new.
+    double(row[1].to_f - row[2].to_f)
+
 == Other experiments
 Samples that add new cells in functional style.
   count = $inData0.length
