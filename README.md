@@ -20,6 +20,7 @@ See [Ruby wrapper](RubyScript/rb/README.rdoc)
 [Download sample workflow](samples/KNIME_Ruby_Test.zip)
 
 This is simple workflow for ruby4knime testing only. It includes all realized node types.
+
 ![Ruby test workflow](doc/pics/workflow.png)
 
 Now some details.
@@ -66,20 +67,25 @@ Cells.new.
 ```
 
 Joiner (Node 5) generates following data:
+
 ![joiner node 5](doc/pics/joiner.png)
 
 We can control results by line plots.
 
 Fragment of Line Plot (Node 10)
+
 ![line plot 10](doc/pics/output_10.png)
 
 Fragment of Line Plot (Node 11)
+
 ![line plot 11](doc/pics/output_11.png)
 
 Fragment of Line Plot (Node 12)
+
 ![line plot 12](doc/pics/output_12.png)
 
 Fragment of Line Plot (Node 13)
+
 ![line plot 13](doc/pics/output_13.png)
 
 You can combine these Ruby nodes in any combination with other KNIME nodes.
