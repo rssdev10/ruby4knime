@@ -14,7 +14,10 @@ Now realized following node types:
 
 See [Ruby wrapper](RubyScript/rb/README.rdoc)
 
+## Installation
 [Download binary](https://drive.google.com/folderview?id=0Bwx0cbtdU5K6TklLRG90cm5HbFk)
+
+Install this archive as [KNIME extension](http://www.knime.org/downloads/update).
 
 ## Sample workflow
 [Download sample workflow](samples/KNIME_Ruby_Test.zip)
