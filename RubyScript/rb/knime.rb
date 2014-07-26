@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'java'
 
 java_import org.knime.base.data.append.column.AppendedColumnRow
@@ -12,52 +13,78 @@ java_import org.knime.core.data.container.DataContainer
 
 java_import org.knime.core.node.ExecutionContext
 java_import org.knime.core.data.container.BlobSupportDataRow
-java_import org.knime.core.data.DataCell;
+java_import org.knime.core.data.DataCell
 
 module Knime
   module CellUtility
-    def add_cell cell
-       @cells ||= []
-       @cells << cell
+    def add_cell(cell)
+      @cells ||= []
+      @cells << cell
     end
 
-    def int    val; add_cell (IntCell.new    val); self; end
-    def long   val; add_cell (LongCell.new   val); self; end
-    def string val; add_cell (StringCell.new val); self; end
-    def double val; add_cell (DoubleCell.new val); self; end
+    def int(val)
+      add_cell IntCell.new(val)
+      self
+    end
+
+    def long(val)
+      add_cell LongCell.new(val)
+      self
+    end
+
+    def string(val)
+      add_cell StringCell.new(val)
+      self
+    end
+
+    def double(val)
+      add_cell DoubleCell.new(val)
+      self
+    end
 
     # workadound for RowKey class
-    def stringCell val; add_cell (StringCell.new val); self; end
+    def stringCell(val)
+      add_cell StringCell.new(val)
+      self
+    end
   end
 
   class Cells
     include CellUtility
 
-    def cells; @cells; end;
+    attr_reader :cells
   end
 
-  # This method allows to display any text to indicate current 
+  # This method allows to display any text to indicate current
   # calclulation progress
-  def setProgress *val
-    $exec.setProgress *val
+  def setProgress(*val)
+    $exec.setProgress(*val)
   end
 
   # module with methods for DataCell conversations
   module DataConverter
     # convert to double
-    def to_f; getDoubleValue(); end
+    def to_f
+      getDoubleValue
+    end
+
     # convert to integer
-    def to_i; getIntValue(); end
+    def to_i
+      getIntValue
+    end
+
     # convert to long
-    def to_l; getLongValue(); end
+    def to_l
+      getLongValue
+    end
   end
-  
+
   def snippetRunner
     count, step = $inData0.length, 0x2FF
-    coef = step/count.to_f
-    $inData0.each_with_index do |row,i|
+    coef = step / count.to_f
+    $inData0.each_with_index do |row, i|
       $outContainer0 << (yield row)
-      setProgress "#{i*coef}%" if (i & step) == 0
+      setProgress "#{i * coef}%" if (i & step) == 0
     end
   end
 end
@@ -78,27 +105,26 @@ class LongCell
   include DataConverter
 end
 
-
 # Extended knime class
 class Java::OrgKnimeCoreDataContainer::BlobSupportDataRow
   include CellUtility
 
   # Append new columns by previously added chain of cells
   def append
-    AppendedColumnRow.new self, *@cells
+    AppendedColumnRow.new(self, *@cells)
   end
 
   # Append new columns by instance of Cell class
-  def << cells
-    AppendedColumnRow.new self, *cells.cells
+  def <<(cells)
+    AppendedColumnRow.new(self, *cells.cells)
   end
 
   # Get cells by index in Ruby style
-  def [] idx
+  def [](idx)
     if idx >= 0
       getCell(idx)
     else
-      getCell(getNumCells()+idx) # -1 - last element
+      getCell(getNumCells + idx) # -1 - last element
     end
   end
 end
@@ -106,8 +132,11 @@ end
 # Extended knime class
 class Java::OrgKnimeCoreNode::BufferedDataTable
   # Add Ruby specific methods
-  def length; getRowCount(); end
-  alias :size :length
+  def length
+    getRowCount
+  end
+
+  alias_method :size, :length
 end
 
 # Extended knime class
@@ -116,11 +145,11 @@ class Java::OrgKnimeCoreData::RowKey
 
   # Create new row object
   # Return BlobSupportDataRow object
-  def new_row obj_cells = nil
-     @cells=obj_cells.cells if obj_cells
-     ar = DataCell[@cells.length].new
-     @cells.each_with_index{ |item, i| ar[i] = item}
-     BlobSupportDataRow.new(self, ar)
+  def new_row(obj_cells = nil)
+    @cells = obj_cells.cells if obj_cells
+    ar = DataCell[@cells.length].new
+    @cells.each_with_index { |item, i| ar[i] = item }
+    BlobSupportDataRow.new(self, ar)
   end
 end
 
@@ -128,18 +157,14 @@ end
 class Java::OrgKnimeCoreDataContainer::DataContainer
   # Add row in the data container.
   # Row can be copied from input data container or created.
-  def << obj
-    if obj.kind_of? Cells
-      row = createRowKey.new_row obj
-    else
-      row = obj
-    end
+  def <<(obj)
+    row = obj.kind_of? Cells ? createRowKey.new_row(obj) : obj
 
     addRowToTable row
   end
 
   # Set current number of row key.
-  def rowKey= num
+  def rowKey=(num)
     @key = num
   end
 
@@ -147,7 +172,7 @@ class Java::OrgKnimeCoreDataContainer::DataContainer
   # Return RowKey object
   def createRowKey
     @key ||= 0
-    key, @key = @key, @key+1
+    key, @key = @key, @key + 1
     RowKey.createRowKey key
   end
 end
