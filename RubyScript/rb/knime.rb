@@ -158,7 +158,7 @@ class Java::OrgKnimeCoreDataContainer::DataContainer
   # Add row in the data container.
   # Row can be copied from input data container or created.
   def <<(obj)
-    row = obj.kind_of? Cells ? createRowKey.new_row(obj) : obj
+    row = obj.kind_of?(Cells) ? createRowKey.new_row(obj) : obj
 
     addRowToTable row
   end
