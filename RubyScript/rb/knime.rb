@@ -22,31 +22,28 @@ module Knime
       @cells << cell
     end
 
-    def int(val)
-      add_cell IntCell.new(val)
-      self
-    end
+    # generate methods for compatibility with previous release
+    [
+      [:int, IntCell],
+      [:long, LongCell],
+      [:string, StringCell],
+      [:double, DoubleCell],
+      [:stringCell, StringCell] # workaround for RowKey class
+    ].each do |name, cls|
+      Object.send(:define_method, name) do |val| 
+        add_cell cls.new(val)
+        self 
+      end
+    end    
 
-    def long(val)
-      add_cell LongCell.new(val)
-      self
-    end
-
-    def string(val)
-      add_cell StringCell.new(val)
-      self
-    end
-
-    def double(val)
-      add_cell DoubleCell.new(val)
-      self
-    end
-
-    # workadound for RowKey class
-    def stringCell(val)
-      add_cell StringCell.new(val)
-      self
-    end
+    # generate an appropriate methods for any types annotated in the output model
+    $outColumnTypes.each do |name|      
+      cls = const_get name
+      Object.send(:define_method, name) do |val|
+        add_cell cls.new(val)
+        self
+      end
+    end    
   end
 
   class Cells
@@ -56,7 +53,7 @@ module Knime
   end
 
   # This method allows to display any text to indicate current
-  # calclulation progress
+  # calculation progress
   def setProgress(*val)
     $exec.setProgress(*val)
   end
@@ -88,25 +85,15 @@ module Knime
     end
   end
 end
+
 include Knime
 
-# Extended knime class
-class DoubleCell
-  include DataConverter
+[DoubleCell, IntCell, LongCell].each do |cls|
+  cls.class_exec { include DataConverter }
 end
 
 # Extended knime class
-class IntCell
-  include DataConverter
-end
-
-# Extended knime class
-class LongCell
-  include DataConverter
-end
-
-# Extended knime class
-class Java::OrgKnimeCoreDataContainer::BlobSupportDataRow
+class BlobSupportDataRow
   include CellUtility
 
   # Append new columns by previously added chain of cells
@@ -130,7 +117,7 @@ class Java::OrgKnimeCoreDataContainer::BlobSupportDataRow
 end
 
 # Extended knime class
-class Java::OrgKnimeCoreNode::BufferedDataTable
+class BufferedDataTable
   # Add Ruby specific methods
   def length
     getRowCount
@@ -154,7 +141,7 @@ class Java::OrgKnimeCoreData::RowKey
 end
 
 # Extended knime class
-class Java::OrgKnimeCoreDataContainer::DataContainer
+class DataContainer
   # Add row in the data container.
   # Row can be copied from input data container or created.
   def <<(obj)

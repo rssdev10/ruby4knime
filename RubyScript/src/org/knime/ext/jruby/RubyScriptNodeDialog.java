@@ -116,9 +116,9 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
 
         TableColumn typeColumn = table.getColumnModel().getColumn(1);
         JComboBox<String> typeSelector = new JComboBox<String>();
-        typeSelector.addItem("String");
-        typeSelector.addItem("Integer");
-        typeSelector.addItem("Double");
+        typeSelector.addItem("StringCell");
+        typeSelector.addItem("IntegerCell");
+        typeSelector.addItem("DoubleCell");
         typeColumn.setCellEditor(new DefaultCellEditor(typeSelector));
 
         // construct the panel for script loading/authoring

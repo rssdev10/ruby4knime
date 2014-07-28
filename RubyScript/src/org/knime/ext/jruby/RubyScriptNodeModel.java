@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.knime.base.data.append.column.AppendedColumnTable;
+import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
@@ -306,6 +307,18 @@ public class RubyScriptNodeModel extends NodeModel {
                 type = IntCell.TYPE;
             } else if ("Double".equals(columnType)) {
                 type = DoubleCell.TYPE;
+            } else {
+                try {
+                    Class<DataCell> cls = (Class<DataCell>) Class.forName(columnType);
+                    if (cls != null)
+                        type = DataType.getType(cls);
+                    else
+                        columnType = "StringCell";
+
+                } catch (ClassNotFoundException e) {
+                    // e.printStackTrace();
+                    columnType = "StringCell";
+                }
             }
             DataColumnSpec newColumn = new DataColumnSpecCreator(
                     columnNames[i], type).createSpec();
