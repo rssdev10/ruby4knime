@@ -311,12 +311,13 @@ public class RubyScriptNodeModel extends NodeModel {
             }
 
             try {
-                Class<DataCell> cls = (Class<DataCell>) Class
-                        .forName(columnType);
-                if (cls != null)
+                Class cls = Class.forName(columnType);
+                if (org.knime.core.data.DataCell.class.isAssignableFrom(cls))
                     type = DataType.getType(cls);
                 else
-                    columnType = "StringCell";
+                    throw new InvalidSettingsException (columnType
+                            + " does not extend org.knime.core.data.DataCell class.");
+
 
             } catch (ClassNotFoundException e) {
                 // e.printStackTrace();
