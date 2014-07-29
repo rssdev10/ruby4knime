@@ -9,8 +9,8 @@
 package org.knime.ext.jruby;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.event.*;
 import java.io.BufferedReader;
 import java.io.File;
@@ -25,18 +25,28 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableCellEditor;
+import javax.swing.text.BadLocationException;
+
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.*;
+
+//import javax.swing.JScrollPane;
+//import javax.swing.JTextArea;
+//import java.awt.Font;
+
+import org.fife.ui.rtextarea.*;
+import org.fife.ui.rsyntaxtextarea.*;
+
 
 public class RubyScriptNodeDialog extends NodeDialogPane {
     private static NodeLogger logger = NodeLogger
             .getLogger(RubyScriptNodeDialog.class);
-    private JTextArea scriptTextArea = new JTextArea();
+    //private JTextArea scriptTextArea = new JTextArea();
+    private RSyntaxTextArea m_scriptTextArea = new RSyntaxTextArea();
+
     private JTable table;
     private int counter = 1;
     private JCheckBox m_appendColsCB;
@@ -48,9 +58,15 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
     protected RubyScriptNodeDialog() {
         super();
 
-        scriptTextArea.setAutoscrolls(true);
-        Font font = new Font(Font.MONOSPACED, Font.PLAIN, 12);
-        scriptTextArea.setFont(font);
+        //scriptTextArea.setAutoscrolls(true);
+        //Font font = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+        //scriptTextArea.setFont(font);
+        
+        m_scriptTextArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_RUBY);
+        m_scriptTextArea.setCodeFoldingEnabled(true);        
+        m_scriptTextArea.setAntiAliasingEnabled(true);
+        RTextScrollPane spScript = new RTextScrollPane(m_scriptTextArea);
+        spScript.setFoldIndicatorEnabled(true);        
 
         // construct the output column selection panel
         JPanel outputPanel = new JPanel();
@@ -163,7 +179,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
                     exc.printStackTrace();
                 }
 
-                scriptTextArea.setText(buffer.toString());
+                m_scriptTextArea.setText(buffer.toString());
             }
         });
         scriptButton.setText("Load Script from File");
@@ -172,8 +188,11 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
 
         JPanel scriptMainPanel = new JPanel(new BorderLayout());
         scriptMainPanel.add(new JLabel("Script: "), BorderLayout.NORTH);
-        scriptMainPanel.add(new JScrollPane(scriptTextArea),
-                BorderLayout.CENTER);
+
+        //scriptMainPanel.add(new JScrollPane(scriptTextArea),
+        //        BorderLayout.CENTER);
+
+        scriptMainPanel.add(spScript, BorderLayout.CENTER);
 
         scriptPanel.add(scriptButtonPanel, BorderLayout.PAGE_START);
         scriptPanel.add(scriptMainPanel, BorderLayout.CENTER);
@@ -191,7 +210,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         if (script == null) {
             script = "";
         }
-        scriptTextArea.setText(script);
+        m_scriptTextArea.setText(script);
 
         boolean appendCols = settings.getBoolean(
                 RubyScriptNodeModel.APPEND_COLS, true);
@@ -231,12 +250,12 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         }
 
         // save the settings
-        String scriptSetting = scriptTextArea.getText();
+        String scriptSetting = m_scriptTextArea.getText();
         if (scriptSetting == null || "".equals(scriptSetting)) {
             throw new InvalidSettingsException(
                     "Please specify a script to be run.");
         }
-        settings.addString(RubyScriptNodeModel.SCRIPT, scriptTextArea.getText());
+        settings.addString(RubyScriptNodeModel.SCRIPT, m_scriptTextArea.getText());
 
         settings.addBoolean(RubyScriptNodeModel.APPEND_COLS,
                 m_appendColsCB.isSelected());

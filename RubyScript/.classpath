@@ -4,5 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry exported="true" kind="lib" path="lib/jruby-complete-1.7.9.jar"/>
+	<classpathentry kind="lib" path="lib/rsyntaxtextarea.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
