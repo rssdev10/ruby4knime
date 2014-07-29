@@ -1,10 +1,11 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: RubyScript-Node extension for KNIME Workbench
+Bundle-Name: Ruby Script Node extension for KNIME Workbench
 Bundle-SymbolicName: org.knime.ext.jruby; singleton:=true
-Bundle-Version: 0.0.1
+Bundle-Version: 0.0.4
 Bundle-ClassPath: rubyscript.jar,
- lib/jruby-complete-1.7.9.jar
+ lib/jruby-complete-1.7.13.jar,
+ lib/rsyntaxtextarea.jar
 Bundle-Activator: org.knime.ext.jruby.RubyScriptNodePlugin
 Bundle-Vendor: 
 Require-Bundle: org.eclipse.core.runtime,
