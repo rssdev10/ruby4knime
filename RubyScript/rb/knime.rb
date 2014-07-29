@@ -30,20 +30,23 @@ module Knime
       [:double, DoubleCell],
       [:stringCell, StringCell] # workaround for RowKey class
     ].each do |name, cls|
-      Object.send(:define_method, name) do |val| 
-        add_cell cls.new(val)
-        self 
-      end
-    end    
-
-    # generate an appropriate methods for any types annotated in the output model
-    $outColumnTypes.each do |name|      
-      cls = const_get name
       Object.send(:define_method, name) do |val|
         add_cell cls.new(val)
         self
       end
-    end    
+    end
+
+    # generate an appropriate methods for any types annotated in the output model
+    # name should be a fully qualified Java class name!
+    $outColumnTypes.each do |name|
+      cls = Java::JavaClass.for_name( name )
+      import cls.to_s
+      rb_cls = cls.ruby_class
+      Object.send(:define_method, cls.simple_name) do |val|
+        add_cell rb_cls.new(val)
+        self
+      end
+    end
   end
 
   class Cells
@@ -117,7 +120,7 @@ class BlobSupportDataRow
 end
 
 # Extended knime class
-class BufferedDataTable
+class Java::OrgKnimeCoreNode::BufferedDataTable
   # Add Ruby specific methods
   def length
     getRowCount

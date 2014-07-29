@@ -301,25 +301,35 @@ public class RubyScriptNodeModel extends NodeModel {
             DataType type = StringCell.TYPE;
             String columnType = columnTypes[i];
 
+            // convert short classes names
             if ("String".equals(columnType)) {
-                type = StringCell.TYPE;
+                columnType = StringCell.class.getName();
             } else if ("Integer".equals(columnType)) {
-                type = IntCell.TYPE;
+                columnType = IntCell.class.getName();
             } else if ("Double".equals(columnType)) {
-                type = DoubleCell.TYPE;
-            } else {
-                try {
-                    Class<DataCell> cls = (Class<DataCell>) Class.forName(columnType);
-                    if (cls != null)
-                        type = DataType.getType(cls);
-                    else
-                        columnType = "StringCell";
-
-                } catch (ClassNotFoundException e) {
-                    // e.printStackTrace();
-                    columnType = "StringCell";
-                }
+                columnType = DoubleCell.class.getName();
             }
+
+            try {
+                Class<DataCell> cls = (Class<DataCell>) Class
+                        .forName(columnType);
+                if (cls != null)
+                    type = DataType.getType(cls);
+                else
+                    columnType = "StringCell";
+
+            } catch (ClassNotFoundException e) {
+                // e.printStackTrace();
+                throw new InvalidSettingsException (columnType
+                        + " is an incorrect Java class name. "
+                        + "Please check it and specify a fully qualified class name.");
+
+                //columnType = "StringCell";
+            }
+
+            if (!columnTypes[i].equals(columnType))
+                columnTypes[i] = columnType;
+
             DataColumnSpec newColumn = new DataColumnSpecCreator(
                     columnNames[i], type).createSpec();
 
