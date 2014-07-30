@@ -395,7 +395,7 @@ public class RubyScriptNodeModel extends NodeModel {
         DataTableSpec[] result = new DataTableSpec[numOutputs];
         for (int i = 0; i < numOutputs; i++) {
             result[i] = newSpec;
-        }        
+        }
         return result;
     }
 
@@ -565,10 +565,10 @@ public class RubyScriptNodeModel extends NodeModel {
 
             m_script_error.errorTrace = builder.toString();
             if (m_script_error.errorTrace.length() > 0) {
-                logger.error("--- Traceback --- error source first\n"
-                        + "line: class ( method ) file \n"
+                logger.error("\n--- Traceback --- error source first\n"
+                        + "line:   class ( method )    file \n"
                         + m_script_error.errorTrace
-                        + "[error] --- Traceback --- end --------------");
+                        + "--- Traceback --- end --------------");
             }
 
         } else if (m_script_error.errorType != "SyntaxError") {
