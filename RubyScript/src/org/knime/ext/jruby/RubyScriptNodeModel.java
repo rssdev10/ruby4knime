@@ -191,7 +191,7 @@ public class RubyScriptNodeModel extends NodeModel {
         if (this.snippetMode) {
             buffer = new StringBuffer();
             buffer.append("end\n");
-            buffer.append("snippetRunner &func\n");
+            buffer.append("snippet_runner &func\n");
             scriptFooter = buffer.toString();
         }        
     }
