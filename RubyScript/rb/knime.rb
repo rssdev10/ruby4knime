@@ -15,7 +15,12 @@ java_import org.knime.core.node.ExecutionContext
 java_import org.knime.core.data.container.BlobSupportDataRow
 java_import org.knime.core.data.DataCell
 
+# This module contains utility methods and classes
+# for convinient Ruby script writing for KNIME
+# See also https://tech.knime.org/javadoc-api
 module Knime
+  # This module defines a container for columns for using it in
+  # style Cell.new.StringCell('str').IntegerCell(123).DoubleCell()...
   module CellUtility
     def add_cell(cell)
       @cells ||= []
@@ -36,10 +41,11 @@ module Knime
       end
     end
 
-    # generate an appropriate methods for any types annotated in the output model
+    # generate an appropriate methods for any types annotated in
+    #   the output model
     # name should be a fully qualified Java class name!
     $outColumnTypes.each do |name|
-      cls = Java::JavaClass.for_name( name )
+      cls = Java::JavaClass.for_name(name)
       import cls.to_s
       rb_cls = cls.ruby_class
       Object.send(:define_method, cls.simple_name) do |val|
@@ -49,6 +55,7 @@ module Knime
     end
   end
 
+  # Instances of this class are intended for a columns container.
   class Cells
     include CellUtility
 
