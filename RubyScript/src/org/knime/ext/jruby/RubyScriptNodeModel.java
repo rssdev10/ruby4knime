@@ -14,6 +14,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
@@ -51,6 +54,7 @@ public class RubyScriptNodeModel extends NodeModel {
     public static final String APPEND_COLS = "append_columns";
     public static final String COLUMN_NAMES = "new_column_names";
     public static final String COLUMN_TYPES = "new_column_types";
+
     protected int numInputs = 0;
     protected int numOutputs = 0;
 
@@ -72,17 +76,43 @@ public class RubyScriptNodeModel extends NodeModel {
     
     private boolean snippetMode;
 
+    private class ScriptError {
+        public int errorLine;
+        public int errorColumn;
+        public String errorType;
+        public String errorText;
+        public String errorTrace;
+        public String msg;        
+
+        public ScriptError() {
+          clear();
+        }
+        
+        public void clear() {
+            errorLine = -1;
+            errorColumn = -1;
+            errorType = "--UnKnown--";
+            errorText = "--UnKnown--";
+            errorTrace = "";
+            msg = "";
+        }
+    }
+    
+    private ScriptError m_script_error;
+
     protected RubyScriptNodeModel(int inNumInputs, int inNumOutputs, boolean snippetMode) {
         super(inNumInputs, inNumOutputs);
 
         this.numInputs = inNumInputs;
         this.numOutputs = inNumOutputs;
         this.snippetMode = snippetMode;
+        
+        this.m_script_error = new ScriptError();
 
         // define the common imports string
         StringBuffer buffer = new StringBuffer();
         buffer.append("require PLUGIN_PATH+'/rb/knime.rb'\n");
-        scriptFirstLineNumber = 2;
+        scriptFirstLineNumber = 1;
         
         if (this.snippetMode == true ) {
             buffer.append("func = ->(row) do \n");
@@ -270,11 +300,30 @@ public class RubyScriptNodeModel extends NodeModel {
         container.put("$outColumnTypes", columnTypes);
         container.put("$exec", exec);
         container.put("PLUGIN_PATH", rubyPluginPath);
+        String script_fn = "node_script.rb";
 
-        EvalUnit unit = container.parse(scriptHeader + script + scriptFooter,
-                scriptFirstLineNumber);
-        unit.run();
-
+        try {
+            m_script_error.clear();
+            container.setScriptFilename(script_fn);
+            EvalUnit unit = container.parse(scriptHeader + script
+                    + scriptFooter,
+                    -scriptFirstLineNumber // fix first string number
+                    );
+            unit.run();
+        } catch (Exception e) {
+            Pattern p = Pattern.compile("SystemExit: ([0-9]+)");
+            Matcher matcher = p.matcher(e.toString());
+            if (matcher.find()) {
+                int exitCode = Integer.parseInt(matcher.group(1));
+                logger.debug("Exit code: " + exitCode);
+            } else {
+                findErrorSource(e, script_fn);
+                logger.error("Script error in line: "
+                        + m_script_error.errorLine);
+            }
+            throw new CanceledExecutionException(e.getMessage());
+        }
+        
         BufferedDataTable[] result = new BufferedDataTable[numOutputs];
         for (i = 0; i < numOutputs; i++) {
             outContainer[i].close();
@@ -289,6 +338,8 @@ public class RubyScriptNodeModel extends NodeModel {
      */
     protected final DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
+        m_script_error.clear();
+
         appendCols &= numInputs > 0;
         // append the property columns to the data table spec
         DataTableSpec newSpec = appendCols ? inSpecs[0] : new DataTableSpec();
@@ -344,7 +395,7 @@ public class RubyScriptNodeModel extends NodeModel {
         DataTableSpec[] result = new DataTableSpec[numOutputs];
         for (int i = 0; i < numOutputs; i++) {
             result[i] = newSpec;
-        }
+        }        
         return result;
     }
 
@@ -420,5 +471,111 @@ public class RubyScriptNodeModel extends NodeModel {
 
     public static String getJavaClasspathExtensionPath() {
         return javaClasspathExtensionsPath;
-    }    
+    }
+
+    private int findErrorSource(Throwable thr, String filename) {
+        String err = thr.getMessage();
+
+        if (err.startsWith("(SyntaxError)")) {
+            // org.jruby.parser.ParserSyntaxException
+            // (SyntaxError) script.rb:2: syntax error, unexpected tRCURLY
+
+            Pattern pLineS = Pattern.compile("(?<=:)(\\d+):(.*)");
+            Matcher mLine = pLineS.matcher(err);
+            if (mLine.find()) {
+                logger.debug("SyntaxError error line: " + mLine.group(1));
+                m_script_error.errorText = mLine.group(2) == null ? m_script_error.errorText
+                        : mLine.group(2);
+                logger.debug("SyntaxError: " + m_script_error.errorText);
+                m_script_error.errorLine = Integer.parseInt(mLine.group(1));
+                m_script_error.errorColumn = -1;
+                m_script_error.errorType = "SyntaxError";
+            }
+        } else {
+            // if (err.startsWith("(NameError)")) {
+            // org.jruby.embed.EvalFailedException
+            // (NameError) undefined local variable or method `asdf' for
+            // main:Object
+
+            Pattern type = Pattern.compile("(?<=\\()(\\w*)");
+            Matcher mLine = type.matcher(err);
+            if (mLine.find()) {
+                m_script_error.errorType = mLine.group(1);
+            }
+            Throwable cause = thr.getCause();
+            // cause.printStackTrace();
+            for (StackTraceElement line : cause.getStackTrace()) {
+                if (line.getFileName().equals(filename)) {
+                    m_script_error.errorText = cause.getMessage();
+                    m_script_error.errorColumn = -1;
+                    m_script_error.errorLine = line.getLineNumber();
+                    m_script_error.errorText = thr.getMessage();
+
+                    Pattern knimeType = Pattern
+                            .compile("(?<=org.knime.)(.*)(?=:)");
+                    Matcher mKnimeType = knimeType
+                            .matcher(m_script_error.errorText);
+
+                    if (mKnimeType.find()) {
+                        m_script_error.errorType = mKnimeType.group(1);
+                    }
+
+                    m_script_error.errorType = "RuntimeError";
+
+                    break;
+                }
+            }
+        }
+
+        m_script_error.msg = "script";
+        if (m_script_error.errorLine != -1) {
+            m_script_error.msg += " stopped with error in line "
+                    + m_script_error.errorLine;
+            if (m_script_error.errorColumn != -1) {
+                m_script_error.msg += " at column "
+                        + m_script_error.errorColumn;
+            }
+        } else {
+            m_script_error.msg += "] stopped with error at line --unknown--";
+        }
+
+        if (m_script_error.errorType == "RuntimeError") {
+            logger.error(m_script_error.msg + "\n" + m_script_error.errorType
+                    + " ( " + m_script_error.errorText + " )");
+
+            Throwable cause = thr.getCause();
+            // cause.printStackTrace();
+            StackTraceElement[] stack = cause.getStackTrace();
+            /*
+             * StringWriter writer = new StringWriter(); PrintWriter out = new
+             * PrintWriter(writer); cause.printStackTrace(out); errorTrace =
+             * writer.toString();
+             */
+            StringBuilder builder = new StringBuilder();
+            for (StackTraceElement line : stack) {
+                builder.append(line.getLineNumber());
+                builder.append(":\t");
+                builder.append(line.getClassName());
+                builder.append(" ( ");
+                builder.append(line.getMethodName());
+                builder.append(" )\t");
+                builder.append(line.getFileName());
+                builder.append('\n');
+            }
+
+            m_script_error.errorTrace = builder.toString();
+            if (m_script_error.errorTrace.length() > 0) {
+                logger.error("--- Traceback --- error source first\n"
+                        + "line: class ( method ) file \n"
+                        + m_script_error.errorTrace
+                        + "[error] --- Traceback --- end --------------");
+            }
+
+        } else if (m_script_error.errorType != "SyntaxError") {
+            logger.error(m_script_error.msg);
+            logger.error("Could not evaluate error source nor reason. Analyze StackTrace!");
+            logger.error(err);
+        }
+        return m_script_error.errorLine;
+    }
 }
