@@ -79,7 +79,7 @@ module Knime
     end
   end
 
-  def snippetRunner
+  def snippet_runner
     count, step = $inData0.length, 0x2FF
     coef = step / count.to_f
     $inData0.each_with_index do |row, i|
