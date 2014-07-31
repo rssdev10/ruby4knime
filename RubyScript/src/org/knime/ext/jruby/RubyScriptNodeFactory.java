@@ -12,12 +12,28 @@ import org.knime.core.node.NodeView;
  */
 public class RubyScriptNodeFactory extends NodeFactory<RubyScriptNodeModel> {
 
+    private RubyScriptNodeModel m_model;
+    private RubyScriptNodeDialog m_dialog;
+
+    protected RubyScriptNodeModel setModel(RubyScriptNodeModel model) {
+        m_model = model;
+        return model;
+    }
+    
+    public RubyScriptNodeModel getModel() {
+        return m_model;
+    }
+
+    public RubyScriptNodeDialog getDialog() {
+        return m_dialog;
+    }
+    
     /**
      * {@inheritDoc}
      */
     @Override
     public RubyScriptNodeModel createNodeModel() {
-        return new RubyScriptNodeModel(1, 1, false);
+        return setModel(new RubyScriptNodeModel(1, 1, false)); 
     }
 
     /**
@@ -50,6 +66,7 @@ public class RubyScriptNodeFactory extends NodeFactory<RubyScriptNodeModel> {
      */
     @Override
     public final NodeDialogPane createNodeDialogPane() {
-        return new RubyScriptNodeDialog();
+        m_dialog = new RubyScriptNodeDialog(this); 
+        return m_dialog;
     }
 }

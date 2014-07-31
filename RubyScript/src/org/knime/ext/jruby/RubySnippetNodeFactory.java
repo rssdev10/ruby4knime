@@ -13,6 +13,6 @@ public class RubySnippetNodeFactory extends RubyScriptNodeFactory {
      */
     @Override
     public final RubyScriptNodeModel createNodeModel() {
-        return new RubyScriptNodeModel(1, 1, true);
+        return setModel(new RubyScriptNodeModel(1, 1, true));
     }
 }

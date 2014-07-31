@@ -50,13 +50,16 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
     private JTable table;
     private int counter = 1;
     private JCheckBox m_appendColsCB;
+    private RubyScriptNodeFactory m_factory;
 
     /**
      * New pane for configuring ScriptedNode node dialog.
      * 
      */
-    protected RubyScriptNodeDialog() {
+    protected RubyScriptNodeDialog(RubyScriptNodeFactory factory) {
         super();
+        
+        m_factory = factory;
 
         //scriptTextArea.setAutoscrolls(true);
         //Font font = new Font(Font.MONOSPACED, Font.PLAIN, 12);
@@ -211,6 +214,17 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
             script = "";
         }
         m_scriptTextArea.setText(script);
+        m_scriptTextArea.removeAllLineHighlights();
+        RubyScriptNodeModel.ScriptError error = m_factory.getModel().getErrorData();
+        if ( error.lineNum != -1 ) {            
+            try {
+                m_scriptTextArea.addLineHighlight(error.lineNum - 1, Color.red);
+            } catch (BadLocationException e1) {
+                // nothing to do
+                // e1.printStackTrace();
+            }            
+        }
+        
 
         boolean appendCols = settings.getBoolean(
                 RubyScriptNodeModel.APPEND_COLS, true);

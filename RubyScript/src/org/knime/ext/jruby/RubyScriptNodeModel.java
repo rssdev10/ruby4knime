@@ -76,12 +76,12 @@ public class RubyScriptNodeModel extends NodeModel {
     
     private boolean snippetMode;
 
-    private class ScriptError {
-        public int errorLine;
-        public int errorColumn;
-        public String errorType;
-        public String errorText;
-        public String errorTrace;
+    public class ScriptError {
+        public int lineNum;
+        public int columnNum;
+        public String type;
+        public String text;
+        public String trace;
         public String msg;        
 
         public ScriptError() {
@@ -89,16 +89,20 @@ public class RubyScriptNodeModel extends NodeModel {
         }
         
         public void clear() {
-            errorLine = -1;
-            errorColumn = -1;
-            errorType = "--UnKnown--";
-            errorText = "--UnKnown--";
-            errorTrace = "";
+            lineNum = -1;
+            columnNum = -1;
+            type = "--UnKnown--";
+            text = "--UnKnown--";
+            trace = "";
             msg = "";
         }
     }
     
     private ScriptError m_script_error;
+    
+    public ScriptError getErrorData() {
+        return m_script_error;
+    }
 
     protected RubyScriptNodeModel(int inNumInputs, int inNumOutputs, boolean snippetMode) {
         super(inNumInputs, inNumOutputs);
@@ -319,7 +323,7 @@ public class RubyScriptNodeModel extends NodeModel {
             } else {
                 findErrorSource(e, script_fn);
                 logger.error("Script error in line: "
-                        + m_script_error.errorLine);
+                        + m_script_error.lineNum);
             }
             throw new CanceledExecutionException(e.getMessage());
         }
@@ -338,7 +342,6 @@ public class RubyScriptNodeModel extends NodeModel {
      */
     protected final DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
-        m_script_error.clear();
 
         appendCols &= numInputs > 0;
         // append the property columns to the data table spec
@@ -445,6 +448,8 @@ public class RubyScriptNodeModel extends NodeModel {
         appendCols = settings.getBoolean(APPEND_COLS, true);
         columnNames = settings.getStringArray(COLUMN_NAMES);
         columnTypes = settings.getStringArray(COLUMN_TYPES);
+
+        m_script_error.clear();
     }
 
     /**
@@ -484,12 +489,12 @@ public class RubyScriptNodeModel extends NodeModel {
             Matcher mLine = pLineS.matcher(err);
             if (mLine.find()) {
                 logger.debug("SyntaxError error line: " + mLine.group(1));
-                m_script_error.errorText = mLine.group(2) == null ? m_script_error.errorText
+                m_script_error.text = mLine.group(2) == null ? m_script_error.text
                         : mLine.group(2);
-                logger.debug("SyntaxError: " + m_script_error.errorText);
-                m_script_error.errorLine = Integer.parseInt(mLine.group(1));
-                m_script_error.errorColumn = -1;
-                m_script_error.errorType = "SyntaxError";
+                logger.debug("SyntaxError: " + m_script_error.text);
+                m_script_error.lineNum = Integer.parseInt(mLine.group(1));
+                m_script_error.columnNum = -1;
+                m_script_error.type = "SyntaxError";
             }
         } else {
             // if (err.startsWith("(NameError)")) {
@@ -500,27 +505,27 @@ public class RubyScriptNodeModel extends NodeModel {
             Pattern type = Pattern.compile("(?<=\\()(\\w*)");
             Matcher mLine = type.matcher(err);
             if (mLine.find()) {
-                m_script_error.errorType = mLine.group(1);
+                m_script_error.type = mLine.group(1);
             }
             Throwable cause = thr.getCause();
             // cause.printStackTrace();
             for (StackTraceElement line : cause.getStackTrace()) {
                 if (line.getFileName().equals(filename)) {
-                    m_script_error.errorText = cause.getMessage();
-                    m_script_error.errorColumn = -1;
-                    m_script_error.errorLine = line.getLineNumber();
-                    m_script_error.errorText = thr.getMessage();
+                    m_script_error.text = cause.getMessage();
+                    m_script_error.columnNum = -1;
+                    m_script_error.lineNum = line.getLineNumber();
+                    m_script_error.text = thr.getMessage();
 
                     Pattern knimeType = Pattern
                             .compile("(?<=org.knime.)(.*)(?=:)");
                     Matcher mKnimeType = knimeType
-                            .matcher(m_script_error.errorText);
+                            .matcher(m_script_error.text);
 
                     if (mKnimeType.find()) {
-                        m_script_error.errorType = mKnimeType.group(1);
+                        m_script_error.type = mKnimeType.group(1);
                     }
 
-                    m_script_error.errorType = "RuntimeError";
+                    m_script_error.type = "RuntimeError";
 
                     break;
                 }
@@ -528,20 +533,20 @@ public class RubyScriptNodeModel extends NodeModel {
         }
 
         m_script_error.msg = "script";
-        if (m_script_error.errorLine != -1) {
+        if (m_script_error.lineNum != -1) {
             m_script_error.msg += " stopped with error in line "
-                    + m_script_error.errorLine;
-            if (m_script_error.errorColumn != -1) {
+                    + m_script_error.lineNum;
+            if (m_script_error.columnNum != -1) {
                 m_script_error.msg += " at column "
-                        + m_script_error.errorColumn;
+                        + m_script_error.columnNum;
             }
         } else {
             m_script_error.msg += "] stopped with error at line --unknown--";
         }
 
-        if (m_script_error.errorType == "RuntimeError") {
-            logger.error(m_script_error.msg + "\n" + m_script_error.errorType
-                    + " ( " + m_script_error.errorText + " )");
+        if (m_script_error.type == "RuntimeError") {
+            logger.error(m_script_error.msg + "\n" + m_script_error.type
+                    + " ( " + m_script_error.text + " )");
 
             Throwable cause = thr.getCause();
             // cause.printStackTrace();
@@ -563,19 +568,19 @@ public class RubyScriptNodeModel extends NodeModel {
                 builder.append('\n');
             }
 
-            m_script_error.errorTrace = builder.toString();
-            if (m_script_error.errorTrace.length() > 0) {
+            m_script_error.trace = builder.toString();
+            if (m_script_error.trace.length() > 0) {
                 logger.error("\n--- Traceback --- error source first\n"
                         + "line:   class ( method )    file \n"
-                        + m_script_error.errorTrace
+                        + m_script_error.trace
                         + "--- Traceback --- end --------------");
             }
 
-        } else if (m_script_error.errorType != "SyntaxError") {
+        } else if (m_script_error.type != "SyntaxError") {
             logger.error(m_script_error.msg);
             logger.error("Could not evaluate error source nor reason. Analyze StackTrace!");
             logger.error(err);
         }
-        return m_script_error.errorLine;
+        return m_script_error.lineNum;
     }
 }

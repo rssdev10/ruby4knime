@@ -13,6 +13,6 @@ public class RubyScriptNodeFactory22 extends RubyScriptNodeFactory {
      */
     @Override
     public final RubyScriptNodeModel createNodeModel() {
-        return new RubyScriptNodeModel(2, 2, false);
+        return setModel(new RubyScriptNodeModel(2, 2, false));
     }
 }
