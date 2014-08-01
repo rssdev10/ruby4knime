@@ -12,6 +12,8 @@ Now realized following node types:
 * Ruby Script 2x2 allows to process 2 input DataTable into 2 output DataTable.
 * Ruby Snippet allows to process input DataTable into output DataTable by writing code only for one row processing.
 
+It is possible to configure an Output table with any types of columns.
+
 See [Ruby wrapper](RubyScript/rb/README.rdoc)
 
 ## Installation
