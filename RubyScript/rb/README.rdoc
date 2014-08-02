@@ -1,11 +1,11 @@
 = Ruby4Knime
 
-Ruby4Knime is realization of a special node type for http://knime.org that allow to use Ruby scripts for interactive data analytic.
-The main aims of this project are
+Ruby4Knime is a realization of special node types for http://knime.org that allow to use Ruby scripts for interactive data analytic.
+The main aims of this project are:
 * provide possibility to use Ruby language for interactive data analysis;
 * make the analysis more effective using clear and laconic Ruby style.
 
-knime.rb is the simple wrapper that allows to use Knime classes written in Java in the Ruby programming style.
+knime.rb is the simple mediator that allows to use KNIME`s classes written in Java in the Ruby programming style and also use all Java classes without any changes.
 
 = Simple examples
 These samples illustrate how to generate output data from input data of the node.
@@ -65,3 +65,10 @@ Samples that add new cells in functional style.
   $inData0.each do |row|
     $outContainer << $outContainer.createRowKey.stringCell(row.getCell(0).to_s.length.to_s).new_row
   end
+
+= Other notes
+
+Now it is possible to use any types of KNIME in the DataOutput table.
+Simply input a full qualified Java class name in the configuration dialog of
+the Ruby node. E.g. org.knime.core.data.def.ComplexNumberCell or 
+org.knime.ext.textprocessing.data.DocumentCell.
