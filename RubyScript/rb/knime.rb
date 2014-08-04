@@ -114,8 +114,8 @@ module Knime
         str.downcase.gsub(/[^[[:word:]]]/, '_').gsub(/\_+/, '_').chomp('_')
       end
       col_names.each_with_index do |name, num|
-        define_method(name) { getCell(num) } if num == 0
-        define_method("i#{num}_#{name}") { getCell(num) }
+        define_method(name) { getCell(num) } if i == 0
+        define_method("i#{i}_#{name}") { getCell(num) }
       end
     end
   end
