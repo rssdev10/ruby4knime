@@ -19,6 +19,9 @@ java_import org.knime.core.data.DataCell
 # for convinient Ruby script writing for KNIME
 # See also https://tech.knime.org/javadoc-api
 module Knime
+
+  private # hide methods from subclasses of Object class
+
   # This module defines a container for columns for using it in
   # style Cell.new.StringCell('str').IntegerCell(123).DoubleCell()...
   module CellUtility
@@ -86,6 +89,37 @@ module Knime
     end
   end
 
+  # module for extending DataRow implementation classes.
+  module CellAccessor
+    # Get cells by index in Ruby style
+    def [](idx)
+      if idx >= 0
+        getCell(idx)
+      else
+        getCell(getNumCells + idx) # -1 - last element
+      end
+    end
+
+    # Generate dynamic methods for accessing to cells by column name
+    #   from BlobSupportDataRow.
+    # All names are translated in low case. All symbols except :word: are
+    #   changed to underline symbol.
+    # For input 0 only is generated simple names. For all inputs methods has
+    # a following format: i#{input_num}_translated_column_name
+    #
+    $num_inputs ||= 0
+    (0...$num_inputs).each do |i|
+      table = $input_datatable_arr[i]
+      col_names = table.getDataTableSpec.getColumnNames.map do |str|
+        str.downcase.gsub(/[^[[:word:]]]/, '_').gsub(/\_+/, '_').chomp('_')
+      end
+      col_names.each_with_index do |name, num|
+        define_method(name) { getCell(num) } if num == 0
+        define_method("i#{num}_#{name}") { getCell(num) }
+      end
+    end
+  end
+
   def snippet_runner
     count, step = $inData0.length, 0x2FF
     coef = step / count.to_f
@@ -105,6 +139,7 @@ end
 # Extended knime class
 class BlobSupportDataRow
   include CellUtility
+  include CellAccessor
 
   # Append new columns by previously added chain of cells
   def append
@@ -114,15 +149,6 @@ class BlobSupportDataRow
   # Append new columns by instance of Cell class
   def <<(cells)
     AppendedColumnRow.new(self, *cells.cells)
-  end
-
-  # Get cells by index in Ruby style
-  def [](idx)
-    if idx >= 0
-      getCell(idx)
-    else
-      getCell(getNumCells + idx) # -1 - last element
-    end
   end
 end
 

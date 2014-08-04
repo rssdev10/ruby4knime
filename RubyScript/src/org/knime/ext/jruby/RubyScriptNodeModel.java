@@ -291,6 +291,9 @@ public class RubyScriptNodeModel extends NodeModel {
         container.setError(new LoggerOutputStream(logger,
                 NodeLogger.LEVEL.ERROR));
 
+        container.put("$num_inputs", numInputs);
+        container.put("$input_datatable_arr", inData);
+
         for (i = 0; i < numInputs; i++) {
             container.put(String.format("$inData%d", i), in[i]);
         }
@@ -302,6 +305,8 @@ public class RubyScriptNodeModel extends NodeModel {
 
         container.put("$outColumnNames", columnNames);
         container.put("$outColumnTypes", columnTypes);
+        container.put("$num_outputs", numOutputs);
+
         container.put("$exec", exec);
         container.put("PLUGIN_PATH", rubyPluginPath);
         String script_fn = "node_script.rb";
