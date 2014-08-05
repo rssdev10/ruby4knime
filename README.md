@@ -7,6 +7,7 @@ Ruby scripting extension for [KNIME](http://knime.org)
 This is preliminary support of Ruby scripting language for Knime.
 
 Now realized following node types:
+
 * Ruby Generator allows to generate any string or numeric data. Or process any external sources using Ruby.
 * Ruby Script allows to process input DataTable into output DataTable.
 * Ruby Script 2x2 allows to process 2 input DataTable into 2 output DataTable.
@@ -31,30 +32,39 @@ This is simple workflow for ruby4knime testing only. It includes all realized no
 Now some details.
 
 Node 1 contains the following code:
+
 ```ruby
-1000.times do |i|
-  x = i * 0.1 / Math::PI
-  $outContainer << Cells.new.double(x).double(Math.sin(x)).double(Math.sin(x + Math::PI/3))
+0.step(6*Math::PI, 0.01) do |x|
+  $outContainer << Cells.new.double(x).
+                             double(Math.sin(x)).
+                             double(Math.sin(x + Math::PI/3))
 end
 ```
 
 Node 2 contains the following code:
+
 ```ruby
 $outContainer.rowKey = 100000 # generate table keys from this number
-1000.times do |i|
-  x = i * 0.1 / Math::PI
-  $outContainer << Cells.new.double(x).double(Math.cos(x)).double(Math.cos(0.3*x))
+0.step(6*Math::PI, 0.01) do |x|
+  $outContainer << Cells.new.double(x).
+                             double(Math.cos(x)).
+                             double(Math.cos(0.3 * x))
 end
 ```
 
 Node 3 contains the following code:
+
 ```ruby
 $inData0.each do |row|
-  $outContainer << (row << Cells.new.double(row[1].to_f-row[2].to_f))
+  $outContainer << (row << Cells.new.double(row.y1.to_f-row.y2.to_f))
+
+  # alternative
+  # $outContainer << (row << Cells.new.double(row[1].to_f-row[2].to_f))
 end
 ```
 
 Node 4 contains the following code:
+
 ```ruby
 $inData0.each do |row|
   $outContainer0 << row
@@ -65,10 +75,14 @@ end
 ```
 
 Node 6 contains the following code:
+
 ```ruby
-Cells.new.
-  double(row[1].to_f).
-  double(row[2].to_f - row[4].to_f)
+Cells.new.double(row.y1.to_f).
+          double(row.y2.to_f - row.y2_1.to_f)
+
+# alternative
+# Cells.new.double(row[1].to_f).
+#           double(row[2].to_f - row[4].to_f)
 ```
 
 Joiner (Node 5) generates following data:
