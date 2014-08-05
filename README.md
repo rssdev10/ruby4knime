@@ -34,7 +34,7 @@ Now some details.
 Node 1 contains the following code:
 
 ```ruby
-0.step(6*Math::PI, 0.01) do |x|
+0.step(6 * Math::PI, 0.01) do |x|
   $outContainer << Cells.new.double(x).
                              double(Math.sin(x)).
                              double(Math.sin(x + Math::PI/3))
@@ -45,7 +45,7 @@ Node 2 contains the following code:
 
 ```ruby
 $outContainer.rowKey = 100000 # generate table keys from this number
-0.step(6*Math::PI, 0.01) do |x|
+0.step(6 * Math::PI, 0.01) do |x|
   $outContainer << Cells.new.double(x).
                              double(Math.cos(x)).
                              double(Math.cos(0.3 * x))
