@@ -54,6 +54,26 @@ Add difference between columns:
   row << Cells.new.
     double(row[1].to_f - row[2].to_f)
 
+== Access to cells of the input row
+
+Now is realized an access to cells of the row by indexes and by names.
+E.g. we have a table with following columns 'x', 'Y1', 'Y2', 'y1(1)', 'y2(1)'.
+We can access by indexes from 0 to 4 or from -1 (last column) to -5 (first column).
+For these names a special methods are generated. All names are translated in low case.
+All symbols except alhabetic and numbers are changed to underline symbol. Multiple
+undeline symbols are changed by a single. Last one is deleted. That is we have a following
+set of methods: #x, #y1, #y2, #y1_1, #y2_1 available for instances of
+BlobSupportDataRow class. Following code fragments are available:
+
+  row << Cells.new.double(row[0].to_f)
+                   double(row.y1.to_f - row.y2.to_f)
+
+and
+
+  $inData0.each do |row|
+    $outContainer << Cells.new.string(row.x.to_s)
+  end
+
 == Other experiments
 Samples that add new cells in functional style.
   count = $inData0.length
