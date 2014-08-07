@@ -31,8 +31,17 @@ public class LoggerOutputStream extends Writer {
     @Override
     public final void write(char[] b, int off, int len) throws IOException {
         String str = new String(b, off, len);
+
+        // prevent output of empty strings
+        if (str.endsWith("\n")) {
+            str = str.substring(0, str.length()-1);
+        }
+        if (str.length() == 0) return;
+
         if (level == NodeLogger.LEVEL.INFO) {
             logger.info(str);
+        } else if (level == NodeLogger.LEVEL.WARN) {
+            logger.warn(str);
         } else if (level == NodeLogger.LEVEL.ERROR) {
             logger.error(str);
         } else {
@@ -40,4 +49,3 @@ public class LoggerOutputStream extends Writer {
         }
     }
 }
-

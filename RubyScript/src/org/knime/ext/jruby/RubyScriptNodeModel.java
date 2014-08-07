@@ -36,6 +36,7 @@ import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
+import org.knime.core.node.NodeLogger.LEVEL;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -287,7 +288,7 @@ public class RubyScriptNodeModel extends NodeModel {
         container.setLoadPaths(classpath);
 
         container.setOutput(new LoggerOutputStream(logger,
-                NodeLogger.LEVEL.INFO));
+                NodeLogger.LEVEL.WARN));
         container.setError(new LoggerOutputStream(logger,
                 NodeLogger.LEVEL.ERROR));
 
