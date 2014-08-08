@@ -25,6 +25,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableCellEditor;
@@ -33,9 +34,9 @@ import javax.swing.text.BadLocationException;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.*;
 
-//import javax.swing.JScrollPane;
-//import javax.swing.JTextArea;
-//import java.awt.Font;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import java.awt.Font;
 
 import org.fife.ui.rtextarea.*;
 import org.fife.ui.rsyntaxtextarea.*;
@@ -46,6 +47,9 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
             .getLogger(RubyScriptNodeDialog.class);
     //private JTextArea scriptTextArea = new JTextArea();
     private RSyntaxTextArea m_scriptTextArea = new RSyntaxTextArea();
+
+    private JTextArea m_errorMessage = new JTextArea();
+    private JScrollPane m_sp_errorMessage = new JScrollPane(m_errorMessage);
 
     private JTable table;
     private int counter = 1;
@@ -58,18 +62,23 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
      */
     protected RubyScriptNodeDialog(RubyScriptNodeFactory factory) {
         super();
-        
+
         m_factory = factory;
 
         //scriptTextArea.setAutoscrolls(true);
         //Font font = new Font(Font.MONOSPACED, Font.PLAIN, 12);
         //scriptTextArea.setFont(font);
-        
+
         m_scriptTextArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_RUBY);
-        m_scriptTextArea.setCodeFoldingEnabled(true);        
+        m_scriptTextArea.setCodeFoldingEnabled(true);
         m_scriptTextArea.setAntiAliasingEnabled(true);
         RTextScrollPane spScript = new RTextScrollPane(m_scriptTextArea);
-        spScript.setFoldIndicatorEnabled(true);        
+        spScript.setFoldIndicatorEnabled(true);
+
+        Font font = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+        m_errorMessage.setFont(font);
+        m_errorMessage.setForeground(Color.RED);
+        m_errorMessage.setEditable(false);
 
         // construct the output column selection panel
         JPanel outputPanel = new JPanel();
@@ -183,6 +192,9 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
                 }
 
                 m_scriptTextArea.setText(buffer.toString());
+
+                m_scriptTextArea.removeAllLineHighlights();
+                m_sp_errorMessage.setVisible(false);
             }
         });
         scriptButton.setText("Load Script from File");
@@ -195,7 +207,11 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         //scriptMainPanel.add(new JScrollPane(scriptTextArea),
         //        BorderLayout.CENTER);
 
-        scriptMainPanel.add(spScript, BorderLayout.CENTER);
+        //scriptMainPanel.add(spScript, BorderLayout.CENTER);        
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
+                spScript, m_sp_errorMessage);
+        scriptMainPanel.add(splitPane, BorderLayout.CENTER);
 
         scriptPanel.add(scriptButtonPanel, BorderLayout.PAGE_START);
         scriptPanel.add(scriptMainPanel, BorderLayout.CENTER);
@@ -214,17 +230,26 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
             script = "";
         }
         m_scriptTextArea.setText(script);
+
         m_scriptTextArea.removeAllLineHighlights();
+        m_sp_errorMessage.setVisible(false);
+        m_errorMessage.setText("");
         RubyScriptNodeModel.ScriptError error = m_factory.getModel().getErrorData();
-        if ( error.lineNum != -1 ) {            
+        if ( error.lineNum != -1 ) {
             try {
                 m_scriptTextArea.addLineHighlight(error.lineNum - 1, Color.red);
             } catch (BadLocationException e1) {
                 // nothing to do
                 // e1.printStackTrace();
-            }            
+            }
+            StringBuilder outstr = new StringBuilder();
+            outstr.append(error.text);
+            outstr.append("\nline:\t class ( method )\t file\n");
+            outstr.append(error.trace);
+            m_errorMessage.setText(outstr.toString());
+
+            m_sp_errorMessage.setVisible(true);
         }
-        
 
         boolean appendCols = settings.getBoolean(
                 RubyScriptNodeModel.APPEND_COLS, true);
