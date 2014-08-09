@@ -121,10 +121,10 @@ module Knime
   end
 
   def snippet_runner
-    count, step = $inData0.length, 0x2FF
+    count, step = $in_data_0.length, 0x2FF
     coef = step / count.to_f
-    $inData0.each_with_index do |row, i|
-      $outContainer0 << (yield row)
+    $in_data_0.each_with_index do |row, i|
+      $out_data_0 << (yield row)
       setProgress "#{i * coef}%" if (i & step) == 0
     end
   end
