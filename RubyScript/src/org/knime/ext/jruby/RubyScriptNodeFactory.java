@@ -10,6 +10,10 @@ import org.knime.core.node.NodeView;
  * 
  * @author
  */
+/**
+ * @author rss
+ *
+ */
 public class RubyScriptNodeFactory extends NodeFactory<RubyScriptNodeModel> {
 
     private RubyScriptNodeModel m_model;
@@ -44,14 +48,14 @@ public class RubyScriptNodeFactory extends NodeFactory<RubyScriptNodeModel> {
         return 1;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public final NodeView<RubyScriptNodeModel> createNodeView(final int viewIndex,
-            final RubyScriptNodeModel nodeModel) {
-        return new RubyScriptNodeView(nodeModel);
-    }
+//    /**
+//     * {@inheritDoc}
+//     */
+//    @Override
+//    public final NodeView<RubyScriptNodeModel> createNodeView(final int viewIndex,
+//            final RubyScriptNodeModel nodeModel) {
+//        return new RubyScriptNodeView(nodeModel);
+//    }
 
     /**
      * {@inheritDoc}

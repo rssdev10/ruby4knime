@@ -161,17 +161,17 @@ public class RubyScriptNodeModel extends NodeModel {
                 buffer.append("# Example starter script. "
                         + "Add values for new two columns with String and Int types:\n"
                         + "#\n"
-                        + "# count = $inData0.length\n"
-                        + "# $inData0.each_with_index do |row, i|\n"
-                        + "#   $outContainer << "
+                        + "# count = $in_data_0.length\n"
+                        + "# $in_data_0.each_with_index do |row, i|\n"
+                        + "#   $out_data_0 << "
                         + "row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n"
                         + "#   setProgress \"#{i*100/count}%\" if i%100 != 0\n"
                         + "# end\n" + "#\n");
                buffer.append("# Default script:\n");
                 buffer.append("#\n\n");
                 
-                buffer.append("$inData0.each do |row|\n");
-                buffer.append("    $outContainer << row\n");
+                buffer.append("$in_data_0.each do |row|\n");
+                buffer.append("    $out_data_0 << row\n");
                 buffer.append("end");
             } else {
                 buffer.append("# Example starter script. " +
@@ -179,7 +179,7 @@ public class RubyScriptNodeModel extends NodeModel {
                 buffer.append("#\n");
                 buffer.append("# count = 100000\n");
                 buffer.append("# count.times do |i|\n");
-                buffer.append("#   $outContainer << Cells.new.string('Hi!').int(rand i))\n");
+                buffer.append("#   $out_data_0 << Cells.new.string('Hi!').int(rand i))\n");
                 buffer.append("#   setProgress \"#{i*100/count}%\" if i%100 != 0\n");
                 buffer.append("# end\n");
                 buffer.append("#\n");
@@ -206,16 +206,11 @@ public class RubyScriptNodeModel extends NodeModel {
             Exception {
 
         int i;
-        BufferedDataTable[] in = (numInputs > 0 ? new BufferedDataTable[numInputs]
-                : null);
-
-        for (i = 0; i < numInputs; i++) {
-            in[i] = inData[i];
-        }
 
         // construct the output data table specs and the output containers
-        DataTableSpec[] outSpecs = configure(in != null ? new DataTableSpec[] { in[0]
-                .getDataTableSpec() } : null);
+        DataTableSpec[] outSpecs = configure(numInputs > 0 ? 
+                new DataTableSpec[] { inData[0].getDataTableSpec() } : 
+                    null);
 
         DataContainer[] outContainer = new DataContainer[numOutputs];
         for (i = 0; i < numOutputs; i++) {
@@ -296,11 +291,14 @@ public class RubyScriptNodeModel extends NodeModel {
         container.put("$input_datatable_arr", inData);
 
         for (i = 0; i < numInputs; i++) {
-            container.put(String.format("$inData%d", i), in[i]);
+            container.put(String.format("$inData%d", i), inData[i]);
+            container.put(String.format("$in_data_%d", i), inData[i]);
         }
 
+        container.put("$output_datatable_arr", outContainer);
         for (i = 0; i < numOutputs; i++) {
             container.put(String.format("$outContainer%d", i), outContainer[i]);
+            container.put(String.format("$out_data_%d", i), outContainer[i]);
         }
         container.put("$outContainer", outContainer[0]);
 

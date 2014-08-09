@@ -22,28 +22,35 @@
         </tab>
 
         <tab name="Script">
-          <option name="$inData0">The input DataTable containing all available input from input port 0.</option>
-          <option name="$inData1">The input DataTable containing all available input from input port 1.</option>
-          <option name="$outContainer">Output container housing the outgoing DataTable for output port 0. This must be populated with rows by the script or else there will be no output from the node.</option>
-          <option name="$outContainer0">Output container housing the outgoing DataTable for output port 0. The same as $outContainer.</option>
-          <option name="$outContainer1">Output container housing the outgoing DataTable for output port 1.</option>
+          <option name="$input_datatable_arr">Array of input data tables.</option>
+          <option name="$num_inputs">Number of input data tables.</option>
+          <option name="$in_data_0">The input DataTable containing all available input from input port 0.</option>
+          <option name="$in_data_1">The input DataTable containing all available input from input port 1.</option>
+          <option name="$output_datatable_arr">Array of output containers.</option>
+          <option name="$num_outputs">Number of outputs.</option>          
+          <option name="$out_data_0">Output container housing the outgoing DataTable for output port 0. The same as $outContainer.</option>
+          <option name="$out_data_1">Output container housing the outgoing DataTable for output port 1.</option>
 
           <option name="Example use to copy all input row of DataTable:"><pre>
-  $inData0.each do |row|
-    $outContainer &lt;&lt; row
+(0..1).each do |i|
+  out = $output_datatable_arr[i]
+  $input_datatable_arr[i].each do |row|
+    out &lt;&lt; row
   end
+end
+  
           </pre></option>
           <option name="Example use to extend input rows by new columns:"><pre>
-  count = $inData0.length
-  $inData0.each_with_index do |row, i|
-    $outContainer &lt;&lt; (row &lt;&lt; Cells.new.string('Hi!').int(row.getCell(0).to_s.length))
+  count = $in_data_0.length
+  $in_data_0.each_with_index do |row, i|
+    $out_data_0 &lt;&lt; (row &lt;&lt; Cells.new.string('Hi!').int(row.getCell(0).to_s.length))
     setProgress "#{i*100/count}%" if i%100 != 0
   end
           </pre></option>
 
           <option name="Example use to create new DataTable from custom data:"><pre>
-  $inData0.each do |row|
-    $outContainer0 &lt;&lt; Cells.new.string(row[0].to_s.length.to_s)
+  $in_data_0.each do |row|
+    $out_data_0 &lt;&lt; Cells.new.string(row[0].to_s.length.to_s)
   end
           </pre></option>
         </tab>
