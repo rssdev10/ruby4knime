@@ -1,15 +1,15 @@
+/**
+ * <code>NodeFactory</code> for the "RubyScript" Node.
+ * 
+ * 
+ * @author rss
+ */
 package org.knime.ext.jruby;
 
 import org.knime.core.node.NodeDialogPane;
 import org.knime.core.node.NodeFactory;
 import org.knime.core.node.NodeView;
 
-/**
- * <code>NodeFactory</code> for the "RubyScript" Node.
- * 
- * 
- * @author
- */
 public class RubyScriptNodeFactory extends NodeFactory<RubyScriptNodeModel> {
 
     private RubyScriptNodeModel m_model;
@@ -41,7 +41,7 @@ public class RubyScriptNodeFactory extends NodeFactory<RubyScriptNodeModel> {
      */
     @Override
     public final int getNrNodeViews() {
-        return 1;
+        return 0;
     }
 
     /**
@@ -50,7 +50,8 @@ public class RubyScriptNodeFactory extends NodeFactory<RubyScriptNodeModel> {
     @Override
     public final NodeView<RubyScriptNodeModel> createNodeView(final int viewIndex,
             final RubyScriptNodeModel nodeModel) {
-        return new RubyScriptNodeView(nodeModel);
+        //return new RubyScriptNodeView(nodeModel);
+        return null;
     }
 
     /**
