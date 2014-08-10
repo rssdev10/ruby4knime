@@ -222,7 +222,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         m_scriptPanel.add(scriptMainPanel, BorderLayout.CENTER);
 
         addTab("Script Output", outputPanel);
-        addTab("Script", m_scriptPanel);
+        addTab("Script", m_scriptPanel, false);
     }
 
     /**
@@ -252,6 +252,8 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
             m_errorMessage.setText(outstr.toString());
 
             m_sp_errorMessage.setVisible(true);
+            
+            setSelected("Script");
         }
 
         boolean appendCols = settings.getBoolean(
