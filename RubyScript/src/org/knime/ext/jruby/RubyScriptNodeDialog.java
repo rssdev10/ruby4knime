@@ -45,14 +45,16 @@ import org.fife.ui.rsyntaxtextarea.*;
 public class RubyScriptNodeDialog extends NodeDialogPane {
     private static NodeLogger logger = NodeLogger
             .getLogger(RubyScriptNodeDialog.class);
+
+    private JPanel m_scriptPanel;
     //private JTextArea scriptTextArea = new JTextArea();
-    private RSyntaxTextArea m_scriptTextArea = new RSyntaxTextArea();
+    private RSyntaxTextArea m_scriptTextArea;
 
-    private JTextArea m_errorMessage = new JTextArea();
-    private JScrollPane m_sp_errorMessage = new JScrollPane(m_errorMessage);
+    private JTextArea m_errorMessage;
+    private JScrollPane m_sp_errorMessage;
 
-    private JTable table;
-    private int counter = 1;
+    private JTable m_table;
+    private int m_counter = 1;
     private JCheckBox m_appendColsCB;
     private RubyScriptNodeFactory m_factory;
 
@@ -69,6 +71,10 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         //Font font = new Font(Font.MONOSPACED, Font.PLAIN, 12);
         //scriptTextArea.setFont(font);
 
+        m_errorMessage = new JTextArea();
+        m_sp_errorMessage = new JScrollPane(m_errorMessage);
+
+        m_scriptTextArea = new RSyntaxTextArea();
         m_scriptTextArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_RUBY);
         m_scriptTextArea.setCodeFoldingEnabled(true);
         m_scriptTextArea.setAntiAliasingEnabled(true);
@@ -93,9 +99,9 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
             private static final long serialVersionUID = -743704737927962277L;
 
             public void actionPerformed(final ActionEvent e) {
-                ((ScriptNodeOutputColumnsTableModel) table.getModel()).addRow(
-                        "script output " + counter, "String");
-                counter++;
+                ((ScriptNodeOutputColumnsTableModel) m_table.getModel()).addRow(
+                        "script output " + m_counter, "String");
+                m_counter++;
             }
         });
         addButton.setText("Add Output Column");
@@ -105,7 +111,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
             private static final long serialVersionUID = 743704737927962277L;
 
             public void actionPerformed(final ActionEvent e) {
-                int[] selectedRows = table.getSelectedRows();
+                int[] selectedRows = m_table.getSelectedRows();
                 logger.debug("selectedRows = " + selectedRows);
 
                 if (selectedRows.length == 0) {
@@ -115,7 +121,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
                 for (int i = selectedRows.length - 1; i >= 0; i--) {
                     logger.debug("   removal " + i + ": removing row "
                             + selectedRows[i]);
-                    ((ScriptNodeOutputColumnsTableModel) table.getModel())
+                    ((ScriptNodeOutputColumnsTableModel) m_table.getModel())
                             .removeRow(selectedRows[i]);
                 }
             }
@@ -125,24 +131,24 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         outputButtonPanel.add(addButton);
         outputButtonPanel.add(removeButton);
 
-        table = new JTable();
-        table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+        m_table = new JTable();
+        m_table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
-        table.setAutoscrolls(true);
+        m_table.setAutoscrolls(true);
         ScriptNodeOutputColumnsTableModel model = new ScriptNodeOutputColumnsTableModel();
         model.addColumn("Column name");
         model.addColumn("Column type");
-        model.addRow("script output " + counter, "String");
-        counter++;
-        table.setModel(model);
+        model.addRow("script output " + m_counter, "String");
+        m_counter++;
+        m_table.setModel(model);
 
-        outputMainPanel.add(table.getTableHeader(), BorderLayout.PAGE_START);
-        outputMainPanel.add(table, BorderLayout.CENTER);
+        outputMainPanel.add(m_table.getTableHeader(), BorderLayout.PAGE_START);
+        outputMainPanel.add(m_table, BorderLayout.CENTER);
         outputPanel.add(newtableCBPanel);
         outputPanel.add(outputButtonPanel);
         outputPanel.add(outputMainPanel);
 
-        TableColumn typeColumn = table.getColumnModel().getColumn(1);
+        TableColumn typeColumn = m_table.getColumnModel().getColumn(1);
         JComboBox<String> typeSelector = new JComboBox<String>();
         typeSelector.addItem("String");
         typeSelector.addItem("Integer");
@@ -152,7 +158,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         typeColumn.setCellEditor(new DefaultCellEditor(typeSelector));
 
         // construct the panel for script loading/authoring
-        JPanel scriptPanel = new JPanel(new BorderLayout());
+        m_scriptPanel = new JPanel(new BorderLayout());
 
         JPanel scriptButtonPanel = new JPanel();
         JButton scriptButton = new JButton(new AbstractAction() {
@@ -193,8 +199,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
 
                 m_scriptTextArea.setText(buffer.toString());
 
-                m_scriptTextArea.removeAllLineHighlights();
-                m_sp_errorMessage.setVisible(false);
+                clearErrorHighlight();
             }
         });
         scriptButton.setText("Load Script from File");
@@ -213,11 +218,11 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
                 spScript, m_sp_errorMessage);
         scriptMainPanel.add(splitPane, BorderLayout.CENTER);
 
-        scriptPanel.add(scriptButtonPanel, BorderLayout.PAGE_START);
-        scriptPanel.add(scriptMainPanel, BorderLayout.CENTER);
+        m_scriptPanel.add(scriptButtonPanel, BorderLayout.PAGE_START);
+        m_scriptPanel.add(scriptMainPanel, BorderLayout.CENTER);
 
         addTab("Script Output", outputPanel);
-        addTab("Script", scriptPanel);
+        addTab("Script", m_scriptPanel);
     }
 
     /**
@@ -231,9 +236,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         }
         m_scriptTextArea.setText(script);
 
-        m_scriptTextArea.removeAllLineHighlights();
-        m_sp_errorMessage.setVisible(false);
-        m_errorMessage.setText("");
+        clearErrorHighlight();
         RubyScriptNodeModel.ScriptError error = m_factory.getModel().getErrorData();
         if ( error.lineNum != -1 ) {
             try {
@@ -260,14 +263,14 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         String[] dataTableColumnTypes = settings.getStringArray(
                 RubyScriptNodeModel.COLUMN_TYPES, new String[0]);
 
-        ((ScriptNodeOutputColumnsTableModel) table.getModel()).clearRows();
+        ((ScriptNodeOutputColumnsTableModel) m_table.getModel()).clearRows();
 
         if (dataTableColumnNames == null) {
             return;
         }
 
         for (int i = 0; i < dataTableColumnNames.length; i++) {
-            ((ScriptNodeOutputColumnsTableModel) table.getModel()).addRow(
+            ((ScriptNodeOutputColumnsTableModel) m_table.getModel()).addRow(
                     dataTableColumnNames[i], dataTableColumnTypes[i]);
         }
     }
@@ -279,11 +282,11 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
             throws InvalidSettingsException {
         // work around a jtable cell value persistence problem
         // by explicitly stopping editing if a cell is currently in edit mode
-        int editingRow = table.getEditingRow();
-        int editingColumn = table.getEditingColumn();
+        int editingRow = m_table.getEditingRow();
+        int editingColumn = m_table.getEditingColumn();
 
         if (editingRow != -1 && editingColumn != -1) {
-            TableCellEditor editor = table.getCellEditor(editingRow,
+            TableCellEditor editor = m_table.getCellEditor(editingRow,
                     editingColumn);
             editor.stopCellEditing();
         }
@@ -298,13 +301,23 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
 
         settings.addBoolean(RubyScriptNodeModel.APPEND_COLS,
                 m_appendColsCB.isSelected());
-        String[] columnNames = ((ScriptNodeOutputColumnsTableModel) table
+        String[] columnNames = ((ScriptNodeOutputColumnsTableModel) m_table
                 .getModel()).getDataTableColumnNames();
         settings.addStringArray(RubyScriptNodeModel.COLUMN_NAMES, columnNames);
 
-        String[] columnTypes = ((ScriptNodeOutputColumnsTableModel) table
+        String[] columnTypes = ((ScriptNodeOutputColumnsTableModel) m_table
                 .getModel()).getDataTableColumnTypes();
         settings.addStringArray(RubyScriptNodeModel.COLUMN_TYPES, columnTypes);
     }
 
+    /**
+     * Delete highlight in the script pane and hide error window
+     */
+    protected final void clearErrorHighlight() {
+        m_scriptTextArea.removeAllLineHighlights();
+        m_sp_errorMessage.setVisible(false);
+        m_errorMessage.setText("");
+        m_scriptPanel.revalidate();
+        m_scriptPanel.repaint();
+    }
 }

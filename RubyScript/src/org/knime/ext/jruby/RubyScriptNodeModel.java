@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.knime.base.data.append.column.AppendedColumnTable;
-import org.knime.core.data.DataCell;
 import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataColumnSpecCreator;
 import org.knime.core.data.DataTableSpec;
@@ -36,7 +35,6 @@ import org.knime.core.node.ExecutionContext;
 import org.knime.core.node.ExecutionMonitor;
 import org.knime.core.node.InvalidSettingsException;
 import org.knime.core.node.NodeLogger;
-import org.knime.core.node.NodeLogger.LEVEL;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -56,26 +54,27 @@ public class RubyScriptNodeModel extends NodeModel {
     public static final String COLUMN_NAMES = "new_column_names";
     public static final String COLUMN_TYPES = "new_column_types";
 
-    protected int numInputs = 0;
-    protected int numOutputs = 0;
+    protected int m_numInputs = 0;
+    protected int m_numOutputs = 0;
 
     /**
      * our logger instance.
      */
-    private static NodeLogger logger = NodeLogger
+    private static NodeLogger m_logger = NodeLogger
             .getLogger(RubyScriptNodeModel.class);
-    protected String scriptHeader = "";
-    protected String scriptFooter = "";
-    protected String script = "";
-    protected int scriptFirstLineNumber;
+
+    protected String m_scriptHeader = "";
+    protected String m_scriptFooter = "";
+    protected String m_script = "";
+    protected int m_scriptFirstLineNumber;
     
-    protected boolean appendCols = true;
-    protected String[] columnNames;
-    protected String[] columnTypes;
-    private static String javaExtDirsExtensionsPath;
-    private static String javaClasspathExtensionsPath;
+    protected boolean m_appendCols = true;
+    protected String[] m_columnNames;
+    protected String[] m_columnTypes;
+    private static String m_javaExtDirsExtensionsPath;
+    private static String m_javaClasspathExtensionsPath;
     
-    private boolean snippetMode;
+    private boolean m_snippetMode;
 
     public class ScriptError {
         public int lineNum;
@@ -108,40 +107,40 @@ public class RubyScriptNodeModel extends NodeModel {
     protected RubyScriptNodeModel(int inNumInputs, int inNumOutputs, boolean snippetMode) {
         super(inNumInputs, inNumOutputs);
 
-        this.numInputs = inNumInputs;
-        this.numOutputs = inNumOutputs;
-        this.snippetMode = snippetMode;
+        m_numInputs = inNumInputs;
+        m_numOutputs = inNumOutputs;
+        m_snippetMode = snippetMode;
         
-        this.m_script_error = new ScriptError();
+        m_script_error = new ScriptError();
 
         // define the common imports string
         StringBuffer buffer = new StringBuffer();
         buffer.append("require PLUGIN_PATH+'/rb/knime.rb'\n");
-        scriptFirstLineNumber = 1;
+        m_scriptFirstLineNumber = 1;
         
-        if (this.snippetMode == true ) {
+        if (m_snippetMode == true ) {
             buffer.append("func = ->(row) do \n");
-            scriptFirstLineNumber += 1;
+            m_scriptFirstLineNumber += 1;
         }          
         
-        scriptHeader = buffer.toString();
+        m_scriptHeader = buffer.toString();
 
         buffer = new StringBuffer();
         buffer.append("# Available scripting variables:\n");
-        for (int i = 0; i < numInputs; i++) {
+        for (int i = 0; i < m_numInputs; i++) {
             buffer.append(String.format(
                     "#     inData%d - input DataTable %d\n", i, i + 1));
         }
         buffer.append("#     outContainer - container housing output DataTable"
                 + " (the same as outContainer0)\n");
 
-        for (int i = 0; i < numOutputs; i++) {
+        for (int i = 0; i < m_numOutputs; i++) {
             buffer.append(String
                     .format("#     outContainer%d - container housing output DataTable %d\n", i, i+1));
         }
         buffer.append("#\n");
         
-        if (this.snippetMode) {
+        if (m_snippetMode) {
             buffer.append("# Snippet intended for operations with one row.\n"
                     + "# This code places in the special lambda function with argument named row.\n"
                     + "# The lambda function must return the row by any available for Ruby ways.\n"
@@ -157,7 +156,7 @@ public class RubyScriptNodeModel extends NodeModel {
             buffer.append("  row");
             
         } else {
-            if (numInputs > 0) {
+            if (m_numInputs > 0) {
                 buffer.append("# Example starter script. "
                         + "Add values for new two columns with String and Int types:\n"
                         + "#\n"
@@ -191,13 +190,13 @@ public class RubyScriptNodeModel extends NodeModel {
                 buffer.append("end");
             }
         }
-        script = buffer.toString();
+        m_script = buffer.toString();
 
-        if (this.snippetMode) {
+        if (m_snippetMode) {
             buffer = new StringBuffer();
             buffer.append("end\n");
             buffer.append("snippet_runner &func\n");
-            scriptFooter = buffer.toString();
+            m_scriptFooter = buffer.toString();
         }        
     }
 
@@ -208,12 +207,12 @@ public class RubyScriptNodeModel extends NodeModel {
         int i;
 
         // construct the output data table specs and the output containers
-        DataTableSpec[] outSpecs = configure(numInputs > 0 ? 
+        DataTableSpec[] outSpecs = configure(m_numInputs > 0 ? 
                 new DataTableSpec[] { inData[0].getDataTableSpec() } : 
                     null);
 
-        DataContainer[] outContainer = new DataContainer[numOutputs];
-        for (i = 0; i < numOutputs; i++) {
+        DataContainer[] outContainer = new DataContainer[m_numOutputs];
+        for (i = 0; i < m_numOutputs; i++) {
             outContainer[i] = new DataContainer(outSpecs[i]);
         }
 
@@ -282,40 +281,42 @@ public class RubyScriptNodeModel extends NodeModel {
         // redundant paths.
         container.setLoadPaths(classpath);
 
-        container.setOutput(new LoggerOutputStream(logger,
+        container.setOutput(new LoggerOutputStream(m_logger,
                 NodeLogger.LEVEL.WARN));
-        container.setError(new LoggerOutputStream(logger,
+        container.setError(new LoggerOutputStream(m_logger,
                 NodeLogger.LEVEL.ERROR));
 
-        container.put("$num_inputs", numInputs);
+        // ********** Configuring of global variables ***************
+        container.put("$num_inputs", m_numInputs);
         container.put("$input_datatable_arr", inData);
 
-        for (i = 0; i < numInputs; i++) {
+        for (i = 0; i < m_numInputs; i++) {
             container.put(String.format("$inData%d", i), inData[i]);
             container.put(String.format("$in_data_%d", i), inData[i]);
         }
 
         container.put("$output_datatable_arr", outContainer);
-        for (i = 0; i < numOutputs; i++) {
+        for (i = 0; i < m_numOutputs; i++) {
             container.put(String.format("$outContainer%d", i), outContainer[i]);
             container.put(String.format("$out_data_%d", i), outContainer[i]);
         }
         container.put("$outContainer", outContainer[0]);
 
-        container.put("$outColumnNames", columnNames);
-        container.put("$outColumnTypes", columnTypes);
-        container.put("$num_outputs", numOutputs);
+        container.put("$outColumnNames", m_columnNames);
+        container.put("$outColumnTypes", m_columnTypes);
+        container.put("$num_outputs", m_numOutputs);
 
         container.put("$exec", exec);
         container.put("PLUGIN_PATH", rubyPluginPath);
-        String script_fn = "node_script.rb";
 
+        // ********** Script execution ***************
+        String script_fn = "node_script.rb";
         try {
             m_script_error.clear();
             container.setScriptFilename(script_fn);
-            EvalUnit unit = container.parse(scriptHeader + script
-                    + scriptFooter,
-                    -scriptFirstLineNumber // fix first string number
+            EvalUnit unit = container.parse(m_scriptHeader + m_script
+                    + m_scriptFooter,
+                    -m_scriptFirstLineNumber // fix first string number
                     );
             unit.run();
         } catch (Exception e) {
@@ -323,17 +324,18 @@ public class RubyScriptNodeModel extends NodeModel {
             Matcher matcher = p.matcher(e.toString());
             if (matcher.find()) {
                 int exitCode = Integer.parseInt(matcher.group(1));
-                logger.debug("Exit code: " + exitCode);
+                m_logger.debug("Exit code: " + exitCode);
             } else {
                 findErrorSource(e, script_fn);
-                logger.error("Script error in line: "
+                m_logger.error("Script error in line: "
                         + m_script_error.lineNum);
             }
             throw new CanceledExecutionException(e.getMessage());
         }
         
-        BufferedDataTable[] result = new BufferedDataTable[numOutputs];
-        for (i = 0; i < numOutputs; i++) {
+        // Output result preparing
+        BufferedDataTable[] result = new BufferedDataTable[m_numOutputs];
+        for (i = 0; i < m_numOutputs; i++) {
             outContainer[i].close();
             result[i] = exec.createBufferedDataTable(
                     outContainer[i].getTable(), exec);
@@ -347,17 +349,17 @@ public class RubyScriptNodeModel extends NodeModel {
     protected final DataTableSpec[] configure(final DataTableSpec[] inSpecs)
             throws InvalidSettingsException {
 
-        appendCols &= numInputs > 0;
+        m_appendCols &= m_numInputs > 0;
         // append the property columns to the data table spec
-        DataTableSpec newSpec = appendCols ? inSpecs[0] : new DataTableSpec();
+        DataTableSpec newSpec = m_appendCols ? inSpecs[0] : new DataTableSpec();
 
-        if (columnNames == null) {
+        if (m_columnNames == null) {
             return new DataTableSpec[] { newSpec };
         }
 
-        for (int i = 0; i < columnNames.length; i++) {
+        for (int i = 0; i < m_columnNames.length; i++) {
             DataType type = StringCell.TYPE;
-            String columnType = columnTypes[i];
+            String columnType = m_columnTypes[i];
 
             // convert short classes names
             if ("String".equals(columnType)) {
@@ -386,21 +388,21 @@ public class RubyScriptNodeModel extends NodeModel {
                 //columnType = "StringCell";
             }
 
-            if (!columnTypes[i].equals(columnType))
-                columnTypes[i] = columnType;
+            if (!m_columnTypes[i].equals(columnType))
+                m_columnTypes[i] = columnType;
 
             DataColumnSpec newColumn = new DataColumnSpecCreator(
-                    columnNames[i], type).createSpec();
+                    m_columnNames[i], type).createSpec();
 
             newSpec = AppendedColumnTable.getTableSpec(newSpec, newColumn);
         }
 
-        if (script == null) {
-            script = "";
+        if (m_script == null) {
+            m_script = "";
         }
 
-        DataTableSpec[] result = new DataTableSpec[numOutputs];
-        for (int i = 0; i < numOutputs; i++) {
+        DataTableSpec[] result = new DataTableSpec[m_numOutputs];
+        for (int i = 0; i < m_numOutputs; i++) {
             result[i] = newSpec;
         }
         return result;
@@ -436,10 +438,10 @@ public class RubyScriptNodeModel extends NodeModel {
      * {@inheritDoc}
      */
     protected final void saveSettingsTo(final NodeSettingsWO settings) {
-        settings.addString(SCRIPT, script);
-        settings.addBoolean(APPEND_COLS, appendCols);
-        settings.addStringArray(COLUMN_NAMES, columnNames);
-        settings.addStringArray(COLUMN_TYPES, columnTypes);
+        settings.addString(SCRIPT, m_script);
+        settings.addBoolean(APPEND_COLS, m_appendCols);
+        settings.addStringArray(COLUMN_NAMES, m_columnNames);
+        settings.addStringArray(COLUMN_TYPES, m_columnTypes);
     }
 
     /**
@@ -447,11 +449,11 @@ public class RubyScriptNodeModel extends NodeModel {
      */
     protected final void loadValidatedSettingsFrom(final NodeSettingsRO settings)
             throws InvalidSettingsException {
-        script = settings.getString(SCRIPT);
+        m_script = settings.getString(SCRIPT);
         // since 1.3
-        appendCols = settings.getBoolean(APPEND_COLS, true);
-        columnNames = settings.getStringArray(COLUMN_NAMES);
-        columnTypes = settings.getStringArray(COLUMN_TYPES);
+        m_appendCols = settings.getBoolean(APPEND_COLS, true);
+        m_columnNames = settings.getStringArray(COLUMN_NAMES);
+        m_columnTypes = settings.getStringArray(COLUMN_TYPES);
 
         m_script_error.clear();
     }
@@ -467,21 +469,27 @@ public class RubyScriptNodeModel extends NodeModel {
     }
 
     public static void setJavaExtDirsExtensionPath(String path) {
-        javaExtDirsExtensionsPath = path;
+        m_javaExtDirsExtensionsPath = path;
     }
 
     public static String getJavaExtDirsExtensionPath() {
-        return javaExtDirsExtensionsPath;
+        return m_javaExtDirsExtensionsPath;
     }
 
     public static void setJavaClasspathExtensionPath(String path) {
-        javaClasspathExtensionsPath = path;
+        m_javaClasspathExtensionsPath = path;
     }
 
     public static String getJavaClasspathExtensionPath() {
-        return javaClasspathExtensionsPath;
+        return m_javaClasspathExtensionsPath;
     }
 
+    /**
+     *  Process exception stack from JRuby.
+     *  This methods searches a message at top of stack by any code 
+     *  from a filename with the value of filename parameter.  
+     *
+    */
     private int findErrorSource(Throwable thr, String filename) {
         String err = thr.getMessage();
 
@@ -492,10 +500,10 @@ public class RubyScriptNodeModel extends NodeModel {
             Pattern pLineS = Pattern.compile("(?<=:)(\\d+):(.*)");
             Matcher mLine = pLineS.matcher(err);
             if (mLine.find()) {
-                logger.debug("SyntaxError error line: " + mLine.group(1));
+                m_logger.debug("SyntaxError error line: " + mLine.group(1));
                 m_script_error.text = mLine.group(2) == null ? m_script_error.text
                         : mLine.group(2);
-                logger.debug("SyntaxError: " + m_script_error.text);
+                m_logger.debug("SyntaxError: " + m_script_error.text);
                 m_script_error.lineNum = Integer.parseInt(mLine.group(1));
                 m_script_error.columnNum = -1;
                 m_script_error.type = "SyntaxError";
@@ -549,7 +557,7 @@ public class RubyScriptNodeModel extends NodeModel {
         }
 
         if (m_script_error.type == "RuntimeError") {
-            logger.error(m_script_error.msg + "\n" + m_script_error.type
+            m_logger.error(m_script_error.msg + "\n" + m_script_error.type
                     + " ( " + m_script_error.text + " )");
 
             Throwable cause = thr.getCause();
@@ -574,16 +582,16 @@ public class RubyScriptNodeModel extends NodeModel {
 
             m_script_error.trace = builder.toString();
             if (m_script_error.trace.length() > 0) {
-                logger.error("\n--- Traceback --- error source first\n"
+                m_logger.error("\n--- Traceback --- error source first\n"
                         + "line:   class ( method )    file \n"
                         + m_script_error.trace
                         + "--- Traceback --- end --------------");
             }
 
         } else if (m_script_error.type != "SyntaxError") {
-            logger.error(m_script_error.msg);
-            logger.error("Could not evaluate error source nor reason. Analyze StackTrace!");
-            logger.error(err);
+            m_logger.error(m_script_error.msg);
+            m_logger.error("Could not evaluate error source nor reason. Analyze StackTrace!");
+            m_logger.error(err);
         }
         return m_script_error.lineNum;
     }
