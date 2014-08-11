@@ -35,9 +35,9 @@ Node 1 contains the following code:
 
 ```ruby
 0.step(6 * Math::PI, 0.01) do |x|
-  $outContainer << Cells.new.double(x).
-                             double(Math.sin(x)).
-                             double(Math.sin(x + Math::PI/3))
+  $out_data_0 << Cells.new.double(x).
+                           double(Math.sin(x)).
+                           double(Math.sin(x + Math::PI/3))
 end
 ```
 
@@ -46,17 +46,17 @@ Node 2 contains the following code:
 ```ruby
 $outContainer.rowKey = 100000 # generate table keys from this number
 0.step(6 * Math::PI, 0.01) do |x|
-  $outContainer << Cells.new.double(x).
-                             double(Math.cos(x)).
-                             double(Math.cos(0.3 * x))
+  $out_data_0 << Cells.new.double(x).
+                           double(Math.cos(x)).
+                           double(Math.cos(0.3 * x))
 end
 ```
 
 Node 3 contains the following code:
 
 ```ruby
-$inData0.each do |row|
-  $outContainer << (row << Cells.new.double(row.y1.to_f-row.y2.to_f))
+$in_data_0.each do |row|
+  $out_data_0 << (row << Cells.new.double(row.y1.to_f-row.y2.to_f))
 
   # alternative
   # $outContainer << (row << Cells.new.double(row[1].to_f-row[2].to_f))
@@ -66,12 +66,12 @@ end
 Node 4 contains the following code:
 
 ```ruby
-$inData0.each do |row|
-  $outContainer0 << row
-end
-$inData1.each do |row|
-  $outContainer1 << row
-end
+(0..1).each do |i|
+  out = $output_datatable_arr[i]
+  $input_datatable_arr[i].each do |row|
+    out << row
+  end
+ end
 ```
 
 Node 6 contains the following code:
