@@ -76,6 +76,8 @@ public class RubyScriptNodeModel extends NodeModel {
     
     private boolean m_snippetMode;
 
+    private static Object m_ScriptingContainerLock = new Object();
+    
     public class ScriptError {
         public int lineNum;
         public int columnNum;
@@ -272,7 +274,14 @@ public class RubyScriptNodeModel extends NodeModel {
 
         // File(RubyScriptNodeModel.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString();
 
-        ScriptingContainer container = new ScriptingContainer(
+        ScriptingContainer container;
+
+        // **** JRuby 1.7.13 workaround ******
+        // Container creation is failed for the first of two parallel executed.
+        // Fails only first time!
+        // ***********************************
+        synchronized(m_ScriptingContainerLock){
+        container = new ScriptingContainer(
                 LocalContextScope.THREADSAFE);
         container.setCompatVersion(CompatVersion.RUBY2_0);
         container.setCompileMode(CompileMode.JIT);
@@ -285,7 +294,7 @@ public class RubyScriptNodeModel extends NodeModel {
                 NodeLogger.LEVEL.WARN));
         container.setError(new LoggerOutputStream(m_logger,
                 NodeLogger.LEVEL.ERROR));
-
+        
         // ********** Configuring of global variables ***************
         container.put("$num_inputs", m_numInputs);
         container.put("$input_datatable_arr", inData);
@@ -308,6 +317,7 @@ public class RubyScriptNodeModel extends NodeModel {
 
         container.put("$exec", exec);
         container.put("PLUGIN_PATH", rubyPluginPath);
+        }
 
         // ********** Script execution ***************
         String script_fn = "node_script.rb";
