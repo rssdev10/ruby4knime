@@ -99,9 +99,25 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
             private static final long serialVersionUID = -743704737927962277L;
 
             public void actionPerformed(final ActionEvent e) {
-                ((ScriptNodeOutputColumnsTableModel) m_table.getModel()).addRow(
-                        "script output " + m_counter, "String");
-                m_counter++;
+                String name;
+                ScriptNodeOutputColumnsTableModel model =
+                        ((ScriptNodeOutputColumnsTableModel) m_table.getModel());
+                String[] columns = model.getDataTableColumnNames();
+                boolean found;
+
+                do {
+                    found = false;
+                    name = "script output " + m_counter;
+                    m_counter++;
+                    for(String s : columns){
+                        if (name.equals(s)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                } while (found);
+
+                model.addRow(name, "String");
             }
         });
         addButton.setText("Add Output Column");
@@ -217,10 +233,10 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
                 spScript, m_sp_errorMessage);
         scriptMainPanel.add(splitPane, BorderLayout.CENTER);
-
+        
         m_scriptPanel.add(scriptButtonPanel, BorderLayout.PAGE_START);
         m_scriptPanel.add(scriptMainPanel, BorderLayout.CENTER);
-
+        
         addTab("Script Output", outputPanel);
         addTab("Script", m_scriptPanel, false);
     }
