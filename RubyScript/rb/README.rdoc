@@ -1,48 +1,63 @@
 = Ruby4Knime
 
-Ruby4Knime is a realization of special node types for http://knime.org that allow to use Ruby scripts for interactive data analytic.
+Ruby4Knime is a realization of special node types for
+http://knime.org that allow to use Ruby scripts for
+interactive data analytic.
+
 The main aims of this project are:
 * provide possibility to use Ruby language for interactive data analysis;
 * make the analysis more effective using clear and laconic Ruby style.
 
-knime.rb is the simple mediator that allows to use KNIME`s classes written in Java in the Ruby programming style and also use all Java classes without any changes.
+knime.rb is the simple mediator that allows to use KNIME`s classes
+written in Java in the Ruby programming style and also use all
+Java classes without any changes.
 
 = Simple examples
-These samples illustrate how to generate output data from input data of the node.
+These samples illustrate how to generate output data from input
+data of the node.
 
 == Copy existing rows
 
-  $inData0.each do |row|
-    $outContainer << row
+  $in_data_0.each do |row|
+    $out_data_0 << row
   end
 
 == Add new two columns with String and Int types
 This example also illustrates the progress state updating.
 
-  count = $inData0.length
-  $inData0.each_with_index do |row, i|
-    $outContainer << (row << Cells.new.string('Hi!').int(row.getCell(0).to_s.length))
+  table = $input_datatable_arr[0]
+  count = table.length
+  table.each_with_index do |row, i|
+    $out_data_0 << (row << Cells.new.string('Hi!').
+                                     int(row[0].to_s.length))
+
     setProgress "#{i*100/count}%" if i%100 != 0
   end
 
 == Create new rows
-In this example new rows creates with new uniq rowkeys. Therefore it is possible to create output table with any number of rows.
-  $inData0.each do |row|
-    $outContainer << Cells.new.string(row.getCell(0).to_s.length.to_s)
+In this example new rows creates with new uniq rowkeys.
+Therefore it is possible to create output table with any number of rows.
+  $in_data_0.each do |row|
+    $out_data_0 << Cells.new.string( row.getCell(0).to_s.length.to_s )
   end
 
-In this example cell 0 copies without changes and adds difference between cells with indexes 1 and 2. Index in Ruby style.
-  $inData0.each do |row|
-    $outContainer << Cells.new.int(row[0].to_i).double(row[1].to_f - row[2].to_f)
+In this example cell 0 copies without changes and adds difference between
+cells with indexes 1 and 2. Index in Ruby style.
+
+  $in_data_0.each do |row|
+    $out_data_0 << Cells.new.int(row[0].to_i).
+                             double(row[1].to_f - row[2].to_f)
   end
 
 
 == Ruby Snippet examples
-Ruby snippet realizes as the body of a lambda-function in the following template:
+Ruby snippet realizes as the body of a lambda-function 
+in the following template:
+
   func = ->(row) do
     <<SNIPPET CODE>>
   end
-  snippetRunner &func
+  snippet_runner &func
 
 === Simple snippet examples
 Copy all rows without changes. Code may contains only row-variable.
@@ -70,25 +85,26 @@ BlobSupportDataRow class. Following code fragments are available:
 
 and
 
-  $inData0.each do |row|
-    $outContainer << Cells.new.string(row.x.to_s)
+  $in_data_0.each do |row|
+    $out_data_0 << Cells.new.string(row.x.to_s)
   end
 
 == Other experiments
 Samples that add new cells in functional style.
-  count = $inData0.length
-  $inData0.each_with_index do |row,i|
-    $outContainer << row.string('Hi!').int(row.getCell(0).to_s.length).append
+  count = $in_data_0.length
+  $in_data_0.each_with_index do |row,i|
+    $out_data_0 << row.string('Hi!').int(row.getCell(0).to_s.length).append
     setProgress "#{i*100/count}%" if i%100 != 0
   end
-
-  $inData0.each do |row|
-    $outContainer << $outContainer.createRowKey.stringCell(row.getCell(0).to_s.length.to_s).new_row
+-
+  $in_data_0.each do |row|
+    $out_data_0 << $out_data_0.createRowKey.
+      stringCell(row.getCell(0).to_s.length.to_s).new_row
   end
 
 = Other notes
 
 Now it is possible to use any types of KNIME in the DataOutput table.
 Simply input a full qualified Java class name in the configuration dialog of
-the Ruby node. E.g. org.knime.core.data.def.ComplexNumberCell or 
+the Ruby node. E.g. org.knime.core.data.def.ComplexNumberCell or
 org.knime.ext.textprocessing.data.DocumentCell.
