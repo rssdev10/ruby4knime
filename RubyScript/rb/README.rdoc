@@ -22,6 +22,19 @@ data of the node.
     $out_data_0 << row
   end
 
+
+== Copy existing rows from all inputs
+This example is applicated for Ruby Script 2x2. Note: all inputs
+and outputs are accessible by names like $in_data_X, $out_data_X or
+by number in appropriate array $output_datatable_arr, $input_datatable_arr.
+
+  (0..1).each do |i|
+    out = $output_datatable_arr[i]
+    $input_datatable_arr[i].each do |row|
+      out << row
+    end
+  end
+
 == Add new two columns with String and Int types
 This example also illustrates the progress state updating.
 
