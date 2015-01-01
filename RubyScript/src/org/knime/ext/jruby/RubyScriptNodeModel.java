@@ -316,6 +316,7 @@ public class RubyScriptNodeModel extends NodeModel {
         container.put("$num_outputs", m_numOutputs);
 
         container.put("$exec", exec);
+        container.put("$node", this);
         container.put("PLUGIN_PATH", rubyPluginPath);
         }
 

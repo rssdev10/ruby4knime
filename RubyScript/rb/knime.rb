@@ -15,6 +15,8 @@ java_import org.knime.core.node.ExecutionContext
 java_import org.knime.core.data.container.BlobSupportDataRow
 java_import org.knime.core.data.DataCell
 
+java_import org.knime.core.node.workflow.FlowVariable
+
 # This module contains utility methods and classes
 # for convinient Ruby script writing for KNIME
 # See also https://tech.knime.org/javadoc-api
@@ -55,7 +57,7 @@ module Knime
         add_cell rb_cls.new(val)
         self
       end
-    end
+    end    
   end
 
   # Instances of this class are intended for a columns container.
@@ -120,6 +122,34 @@ module Knime
     end
   end
 
+  # utility class for access to flow variables
+  class FlowVariableList
+    def self.[](name)
+      @vars ||= $node.getAvailableFlowVariables
+      if (flowvar = @vars[name])
+        case flowvar.getType
+        when FlowVariable::Type::DOUBLE
+          flowvar.getDoubleValue
+        when FlowVariable::Type::INTEGER
+          flowvar.getIntValue
+        when FlowVariable::Type::STRING
+          flowvar.getStringValue
+        end
+      end
+    end
+
+    def self.[]=(name, val)
+      case val.class
+      when Integer
+        $node.pushFlowVariableInteger(name, val)
+      when Float
+        $node.pushFlowVariableDouble(name, val)
+      else
+        $node.pushFlowVariableString(name, val.to_s)
+      end
+    end
+  end
+
   def snippet_runner
     count, step = $in_data_0.length, 0x2FF
     coef = step / count.to_f
@@ -127,7 +157,7 @@ module Knime
       $out_data_0 << (yield row)
       setProgress "#{i * coef}%" if (i & step) == 0
     end
-  end
+  end  
 end
 
 include Knime
