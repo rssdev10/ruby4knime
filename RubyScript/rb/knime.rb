@@ -147,6 +147,7 @@ module Knime
       else
         $node.pushFlowVariableString(name, val.to_s)
       end
+      @vars = $node.getAvailableFlowVariables
     end
   end
 
