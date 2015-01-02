@@ -13,7 +13,11 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,13 +71,15 @@ public class RubyScriptNodeModel extends NodeModel {
     protected String m_scriptFooter = "";
     protected String m_script = "";
     protected int m_scriptFirstLineNumber;
-    
+
     protected boolean m_appendCols = true;
     protected String[] m_columnNames;
     protected String[] m_columnTypes;
+    private ArrayList<DataColumnSpec> m_inputColumnList = null;
+
     private static String m_javaExtDirsExtensionsPath;
     private static String m_javaClasspathExtensionsPath;
-    
+
     private boolean m_snippetMode;
 
     private static Object m_ScriptingContainerLock = new Object();
@@ -112,19 +118,19 @@ public class RubyScriptNodeModel extends NodeModel {
         m_numInputs = inNumInputs;
         m_numOutputs = inNumOutputs;
         m_snippetMode = snippetMode;
-        
+
         m_script_error = new ScriptError();
 
         // define the common imports string
         StringBuffer buffer = new StringBuffer();
         buffer.append("require PLUGIN_PATH+'/rb/knime.rb'\n");
         m_scriptFirstLineNumber = 1;
-        
+
         if (m_snippetMode == true ) {
             buffer.append("func = ->(row) do \n");
             m_scriptFirstLineNumber += 1;
-        }          
-        
+        }
+
         m_scriptHeader = buffer.toString();
 
         buffer = new StringBuffer();
@@ -141,7 +147,7 @@ public class RubyScriptNodeModel extends NodeModel {
                     .format("#     outContainer%d - container housing output DataTable %d\n", i, i+1));
         }
         buffer.append("#\n");
-        
+
         if (m_snippetMode) {
             buffer.append("# Snippet intended for operations with one row.\n"
                     + "# This code places in the special lambda function with argument named row.\n"
@@ -156,7 +162,7 @@ public class RubyScriptNodeModel extends NodeModel {
             buffer.append("#\n\n");
 
             buffer.append("  row");
-            
+
         } else {
             if (m_numInputs > 0) {
                 buffer.append("# Example starter script. "
@@ -170,13 +176,13 @@ public class RubyScriptNodeModel extends NodeModel {
                         + "# end\n" + "#\n");
                buffer.append("# Default script:\n");
                 buffer.append("#\n\n");
-                
+
                 buffer.append("$in_data_0.each do |row|\n");
                 buffer.append("    $out_data_0 << row\n");
                 buffer.append("end");
             } else {
-                buffer.append("# Example starter script. " +
-                		"Add values for new two columns with String and Int types:\n");
+                buffer.append("# Example starter script. "
+                        + "Add values for new two columns with String and Int types:\n");
                 buffer.append("#\n");
                 buffer.append("# count = 100000\n");
                 buffer.append("# count.times do |i|\n");
@@ -294,7 +300,7 @@ public class RubyScriptNodeModel extends NodeModel {
                 NodeLogger.LEVEL.WARN));
         container.setError(new LoggerOutputStream(m_logger,
                 NodeLogger.LEVEL.ERROR));
-        
+
         // ********** Configuring of global variables ***************
         container.put("$num_inputs", m_numInputs);
         container.put("$input_datatable_arr", inData);
@@ -343,7 +349,7 @@ public class RubyScriptNodeModel extends NodeModel {
             }
             throw new CanceledExecutionException(e.getMessage());
         }
-        
+
         // Output result preparing
         BufferedDataTable[] result = new BufferedDataTable[m_numOutputs];
         for (i = 0; i < m_numOutputs; i++) {
@@ -363,6 +369,14 @@ public class RubyScriptNodeModel extends NodeModel {
         m_appendCols &= m_numInputs > 0;
         // append the property columns to the data table spec
         DataTableSpec newSpec = m_appendCols ? inSpecs[0] : new DataTableSpec();
+
+        if (m_numInputs > 0) {
+            m_inputColumnList = new ArrayList<DataColumnSpec>();
+            for (Iterator<DataColumnSpec> item = inSpecs[0].iterator(); item
+                    .hasNext();) {
+                m_inputColumnList.add(item.next());
+            }
+        }
 
         if (m_columnNames == null) {
             return new DataTableSpec[] { newSpec };
@@ -605,5 +619,9 @@ public class RubyScriptNodeModel extends NodeModel {
             m_logger.error(err);
         }
         return m_script_error.lineNum;
+    }
+
+    public ArrayList<DataColumnSpec> getInputColumnList() {
+        return m_inputColumnList;
     }
 }

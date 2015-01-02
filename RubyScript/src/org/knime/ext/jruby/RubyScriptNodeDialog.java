@@ -11,11 +11,16 @@ package org.knime.ext.jruby;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Point;
 import java.awt.event.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import javax.swing.AbstractAction;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
@@ -31,8 +36,10 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableCellEditor;
 import javax.swing.text.BadLocationException;
 
+import org.knime.core.data.DataColumnSpec;
 import org.knime.core.data.DataTableSpec;
 import org.knime.core.node.*;
+import org.knime.core.node.workflow.FlowVariable;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -43,6 +50,9 @@ import org.fife.ui.rsyntaxtextarea.*;
 
 
 public class RubyScriptNodeDialog extends NodeDialogPane {
+
+    private final static String TEMPLATE_FLOW_VAR = "FlowVariableList['%s'] ";
+
     private static NodeLogger logger = NodeLogger
             .getLogger(RubyScriptNodeDialog.class);
 
@@ -67,25 +77,14 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
 
         m_factory = factory;
 
-        //scriptTextArea.setAutoscrolls(true);
-        //Font font = new Font(Font.MONOSPACED, Font.PLAIN, 12);
-        //scriptTextArea.setFont(font);
+        createColumnSelectionTab();
+        createScriptTab();
+    }
 
-        m_errorMessage = new JTextArea();
-        m_sp_errorMessage = new JScrollPane(m_errorMessage);
-
-        m_scriptTextArea = new RSyntaxTextArea();
-        m_scriptTextArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_RUBY);
-        m_scriptTextArea.setCodeFoldingEnabled(true);
-        m_scriptTextArea.setAntiAliasingEnabled(true);
-        RTextScrollPane spScript = new RTextScrollPane(m_scriptTextArea);
-        spScript.setFoldIndicatorEnabled(true);
-
-        Font font = new Font(Font.MONOSPACED, Font.PLAIN, 12);
-        m_errorMessage.setFont(font);
-        m_errorMessage.setForeground(Color.RED);
-        m_errorMessage.setEditable(false);
-
+    /**
+     * Creates column selection tab panel
+     */
+    private final void createColumnSelectionTab() {
         // construct the output column selection panel
         JPanel outputPanel = new JPanel();
         outputPanel.setLayout(new BoxLayout(outputPanel, BoxLayout.Y_AXIS));
@@ -94,14 +93,15 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         JPanel newtableCBPanel = new JPanel();
         m_appendColsCB = new JCheckBox("Append columns to input table spec");
         newtableCBPanel.add(m_appendColsCB, BorderLayout.WEST);
+
         JButton addButton = new JButton(new AbstractAction() {
 
             private static final long serialVersionUID = -743704737927962277L;
 
             public void actionPerformed(final ActionEvent e) {
                 String name;
-                ScriptNodeOutputColumnsTableModel model =
-                        ((ScriptNodeOutputColumnsTableModel) m_table.getModel());
+                ScriptNodeOutputColumnsTableModel model = ((ScriptNodeOutputColumnsTableModel) m_table
+                        .getModel());
                 String[] columns = model.getDataTableColumnNames();
                 boolean found;
 
@@ -109,7 +109,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
                     found = false;
                     name = "script output " + m_counter;
                     m_counter++;
-                    for(String s : columns){
+                    for (String s : columns) {
                         if (name.equals(s)) {
                             found = true;
                             break;
@@ -172,11 +172,39 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         typeSelector.setEditable(true);
 
         typeColumn.setCellEditor(new DefaultCellEditor(typeSelector));
+        addTab("Script Output", outputPanel);
+    }
 
-        // construct the panel for script loading/authoring
+    /**
+     * Creates script tab panel which contains lists of columns, flow variables,
+     * Ruby script etc.
+     */
+    private final void createScriptTab() {
+        // scriptTextArea.setAutoscrolls(true);
+        // Font font = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+        // scriptTextArea.setFont(font);
+
+        m_errorMessage = new JTextArea();
+        m_sp_errorMessage = new JScrollPane(m_errorMessage);
+
+        m_scriptTextArea = new RSyntaxTextArea();
+        m_scriptTextArea
+                .setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_RUBY);
+        m_scriptTextArea.setCodeFoldingEnabled(true);
+        m_scriptTextArea.setAntiAliasingEnabled(true);
+        RTextScrollPane spScript = new RTextScrollPane(m_scriptTextArea);
+        spScript.setFoldIndicatorEnabled(true);
+
+        Font font = new Font(Font.MONOSPACED, Font.PLAIN, 12);
+        m_errorMessage.setFont(font);
+        m_errorMessage.setForeground(Color.RED);
+        m_errorMessage.setEditable(false);
+
         m_scriptPanel = new JPanel(new BorderLayout());
 
         JPanel scriptButtonPanel = new JPanel();
+
+        // script load button
         JButton scriptButton = new JButton(new AbstractAction() {
 
             private static final long serialVersionUID = 6097485154386131768L;
@@ -219,26 +247,137 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
             }
         });
         scriptButton.setText("Load Script from File");
-
         scriptButtonPanel.add(scriptButton);
 
         JPanel scriptMainPanel = new JPanel(new BorderLayout());
         scriptMainPanel.add(new JLabel("Script: "), BorderLayout.NORTH);
 
-        //scriptMainPanel.add(new JScrollPane(scriptTextArea),
-        //        BorderLayout.CENTER);
+        // scriptMainPanel.add(new JScrollPane(scriptTextArea),
+        // BorderLayout.CENTER);
 
-        //scriptMainPanel.add(spScript, BorderLayout.CENTER);        
+        // scriptMainPanel.add(spScript, BorderLayout.CENTER);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
                 spScript, m_sp_errorMessage);
         scriptMainPanel.add(splitPane, BorderLayout.CENTER);
-        
+
+        // add output column list
+        List<DataColumnSpec> list = m_factory.getModel().getInputColumnList();
+        JPanel inputColumnsPanel = addColumnPane("Input[0] columns: ", list);
+
+        // add flow variables
+        JPanel flowVariablesPanel = addFlowVariablesPane("Flow variables: ");
+
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
+                inputColumnsPanel, flowVariablesPanel);
+
+        splitPane.setDividerLocation(splitPane.getSize().height
+                - splitPane.getInsets().bottom - splitPane.getDividerSize()
+                - 50);
+
+        // scriptMainPanel.add(splitPane, BorderLayout.WEST);
+        // scriptMainPanel.add(new JLabel("Script: "), BorderLayout.NORTH);
+
         m_scriptPanel.add(scriptButtonPanel, BorderLayout.PAGE_START);
         m_scriptPanel.add(scriptMainPanel, BorderLayout.CENTER);
-        
-        addTab("Script Output", outputPanel);
-        addTab("Script", m_scriptPanel, false);
+
+        JSplitPane config_and_sript = new JSplitPane(
+                JSplitPane.HORIZONTAL_SPLIT, splitPane, m_scriptPanel);
+
+        config_and_sript.setDividerLocation(200);
+
+        // addTab("Script", m_scriptPanel, false);
+        addTab("Script", config_and_sript, false);
+    }
+
+    /**
+     * Creates a panel of of input columns
+     * @param label
+     * @param list of columns
+     * @return JPanel
+     */
+    private final JPanel addColumnPane(String label, List<DataColumnSpec> list) {
+        JPanel panel = new JPanel(new BorderLayout());
+        JTable table = new JTable();
+        table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+
+        table.setAutoscrolls(true);
+        //table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+
+        ScriptNodeOutputColumnsTableModel model = new ScriptNodeOutputColumnsTableModel();
+        model.addColumn("Column name");
+        model.addColumn("Column type");
+        model.setReadOnly(true);
+        table.setModel(model);
+
+        if (list != null) {
+            for (Iterator<DataColumnSpec> i = list.iterator(); i.hasNext();) {
+                DataColumnSpec spec = i.next();
+                ((ScriptNodeOutputColumnsTableModel) (table.getModel()))
+                        .addRow(spec.getName(), spec.getType().toString());
+            }
+        }
+        JScrollPane scrollPane = new JScrollPane(table);
+        table.setFillsViewportHeight(true);
+
+        panel.add(new JLabel(label), BorderLayout.NORTH);
+        // inputColumnsPanel.add(m_inpputColumnsTable.getTableHeader(),
+        // BorderLayout.PAGE_START);
+        panel.add(scrollPane, BorderLayout.CENTER);
+        return panel;
+    }
+
+    /**
+     * Creates a panel with flow variable list
+     * @param label
+     * @return JPanel
+     */
+    private final JPanel addFlowVariablesPane(String label) {
+        JPanel flowVariablesPanel = new JPanel(new BorderLayout());
+        JTable table = new JTable();
+        table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+
+        table.setAutoscrolls(true);
+        ScriptNodeOutputColumnsTableModel model = new ScriptNodeOutputColumnsTableModel();
+        model.addColumn("Name");
+        model.addColumn("Value");
+        model.setReadOnly(true);
+        table.setModel(model);
+        table.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent event) {
+                if (event.getClickCount() == 2) {
+                    JTable table = (JTable) event.getSource();
+                    Point p = event.getPoint();
+                    int row = table.rowAtPoint(p);
+
+                    m_scriptTextArea.insert(
+                            String.format(TEMPLATE_FLOW_VAR, table.getModel()
+                                    .getValueAt(row, 0).toString()),
+                            m_scriptTextArea.getCaretPosition());
+                }
+            }
+        });
+
+        Map<String, FlowVariable> flow_variables = m_factory.getModel()
+                .getAvailableFlowVariables();
+        for (Iterator<FlowVariable> i = flow_variables.values().iterator(); i
+                .hasNext();) {
+            FlowVariable var = i.next();
+            ((ScriptNodeOutputColumnsTableModel) (table.getModel())).addRow(
+                    var.getName(), var.getStringValue());
+        }
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        table.setFillsViewportHeight(true);
+
+        flowVariablesPanel.add(new JLabel(label),
+                BorderLayout.NORTH);
+        // flowVariablesPanel.add(m_flowVariableTable.getTableHeader(),
+        // BorderLayout.PAGE_START);
+        // flowVariablesPanel.add(m_flowVariableTable, BorderLayout.CENTER);
+        flowVariablesPanel.add(scrollPane, BorderLayout.CENTER);
+        return flowVariablesPanel;
     }
 
     /**
@@ -268,7 +407,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
             m_errorMessage.setText(outstr.toString());
 
             m_sp_errorMessage.setVisible(true);
-            
+
             setSelected("Script");
         }
 

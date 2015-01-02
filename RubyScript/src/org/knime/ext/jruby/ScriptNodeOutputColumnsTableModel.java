@@ -6,8 +6,9 @@ import java.util.*;
 public class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 3748218863796706007L;
-    ArrayList<ArrayList<Object>> data = new ArrayList<ArrayList<Object>>();
-    ArrayList<String> columnNames = new ArrayList<String>();
+    private ArrayList<ArrayList<Object>> data = new ArrayList<ArrayList<Object>>();
+    private ArrayList<String> columnNames = new ArrayList<String>();
+    private boolean m_readOnly = false;
 
     public final String getColumnName(int col) {
         return columnNames.get(col).toString();
@@ -28,7 +29,11 @@ public class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
     }
 
     public final boolean isCellEditable(int row, int col) {
-        return true;
+        return !m_readOnly;
+    }
+
+    public final void setReadOnly(boolean readOnly){
+        m_readOnly = readOnly;
     }
 
     public final void setValueAt(Object value, int row, int col) {
