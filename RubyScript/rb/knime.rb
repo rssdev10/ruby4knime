@@ -104,8 +104,8 @@ module Knime
 
     # Generate dynamic methods for accessing to cells by column name
     #   from BlobSupportDataRow.
-    # All names are translated in low case. All symbols except :word: are
-    #   changed to underline symbol.
+    # All symbols except :word: are changed to underline symbol.
+    # For all names is created a pair of normal and downcased name. 
     # For input 0 only is generated simple names. For all inputs methods has
     # a following format: i#{input_num}_translated_column_name
     #
@@ -113,11 +113,14 @@ module Knime
     (0...$num_inputs).each do |i|
       table = $input_datatable_arr[i]
       col_names = table.getDataTableSpec.getColumnNames.map do |str|
-        str.downcase.gsub(/[^[[:word:]]]/, '_').gsub(/\_+/, '_').chomp('_')
+        [(s1 = str.gsub(/[^[[:word:]]]/, '_').gsub(/\_+/, '_').chomp('_')),
+          s1.downcase].uniq
       end
-      col_names.each_with_index do |name, num|
-        define_method(name) { getCell(num) } if i == 0
-        define_method("i#{i}_#{name}") { getCell(num) }
+      col_names.each_with_index do |names, num|
+        names.each do |name|
+          define_method(name) { getCell(num) } if i == 0
+          define_method("i#{i}_#{name}") { getCell(num) }
+        end
       end
     end
   end
