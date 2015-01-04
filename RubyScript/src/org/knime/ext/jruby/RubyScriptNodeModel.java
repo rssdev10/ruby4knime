@@ -13,11 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -75,7 +71,6 @@ public class RubyScriptNodeModel extends NodeModel {
     protected boolean m_appendCols = true;
     protected String[] m_columnNames;
     protected String[] m_columnTypes;
-    private ArrayList<DataColumnSpec> m_inputColumnList = null;
 
     private static String m_javaExtDirsExtensionsPath;
     private static String m_javaClasspathExtensionsPath;
@@ -83,19 +78,19 @@ public class RubyScriptNodeModel extends NodeModel {
     private boolean m_snippetMode;
 
     private static Object m_ScriptingContainerLock = new Object();
-    
+
     public class ScriptError {
         public int lineNum;
         public int columnNum;
         public String type;
         public String text;
         public String trace;
-        public String msg;        
+        public String msg;
 
         public ScriptError() {
           clear();
         }
-        
+
         public void clear() {
             lineNum = -1;
             columnNum = -1;
@@ -370,14 +365,6 @@ public class RubyScriptNodeModel extends NodeModel {
         // append the property columns to the data table spec
         DataTableSpec newSpec = m_appendCols ? inSpecs[0] : new DataTableSpec();
 
-        if (m_numInputs > 0) {
-            m_inputColumnList = new ArrayList<DataColumnSpec>();
-            for (Iterator<DataColumnSpec> item = inSpecs[0].iterator(); item
-                    .hasNext();) {
-                m_inputColumnList.add(item.next());
-            }
-        }
-
         if (m_columnNames == null) {
             return new DataTableSpec[] { newSpec };
         }
@@ -619,9 +606,5 @@ public class RubyScriptNodeModel extends NodeModel {
             m_logger.error(err);
         }
         return m_script_error.lineNum;
-    }
-
-    public ArrayList<DataColumnSpec> getInputColumnList() {
-        return m_inputColumnList;
     }
 }

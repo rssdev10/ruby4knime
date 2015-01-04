@@ -17,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +68,8 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
     private int m_counter = 1;
     private JCheckBox m_appendColsCB;
     private RubyScriptNodeFactory m_factory;
+
+    private JTable m_columnTable;
 
     /**
      * New pane for configuring ScriptedNode node dialog.
@@ -262,8 +265,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         scriptMainPanel.add(splitPane, BorderLayout.CENTER);
 
         // add output column list
-        List<DataColumnSpec> list = m_factory.getModel().getInputColumnList();
-        JPanel inputColumnsPanel = addColumnPane("Input[0] columns: ", list);
+        JPanel inputColumnsPanel = addColumnPane("Input[0] columns: ");
 
         // add flow variables
         JPanel flowVariablesPanel = addFlowVariablesPane("Flow variables: ");
@@ -296,7 +298,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
      * @param list of columns
      * @return JPanel
      */
-    private final JPanel addColumnPane(String label, List<DataColumnSpec> list) {
+    private final JPanel addColumnPane(String label) {
         JPanel panel = new JPanel(new BorderLayout());
         JTable table = new JTable();
         table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
@@ -311,13 +313,6 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         model.setReadOnly(true);
         table.setModel(model);
 
-        if (list != null) {
-            for (Iterator<DataColumnSpec> i = list.iterator(); i.hasNext();) {
-                DataColumnSpec spec = i.next();
-                ((ScriptNodeOutputColumnsTableModel) (table.getModel()))
-                        .addRow(spec.getName(), spec.getType().toString());
-            }
-        }
         JScrollPane scrollPane = new JScrollPane(table);
         table.setFillsViewportHeight(true);
 
@@ -325,7 +320,21 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         // inputColumnsPanel.add(m_inpputColumnsTable.getTableHeader(),
         // BorderLayout.PAGE_START);
         panel.add(scrollPane, BorderLayout.CENTER);
+        m_columnTable = table;
         return panel;
+    }
+
+    private final void updateColumnTable(final DataTableSpec[] specs) {
+        if (specs != null && specs.length > 0) {
+            ScriptNodeOutputColumnsTableModel model = 
+                    (ScriptNodeOutputColumnsTableModel) (m_columnTable.getModel());
+            model.clearRows();
+            for (Iterator<DataColumnSpec> item = specs[0].iterator(); item
+                    .hasNext();) {
+                DataColumnSpec spec = item.next();
+                model.addRow(spec.getName(), spec.getType().toString());
+            }
+        }
     }
 
     /**
@@ -430,6 +439,8 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
             ((ScriptNodeOutputColumnsTableModel) m_table.getModel()).addRow(
                     dataTableColumnNames[i], dataTableColumnTypes[i]);
         }
+
+        updateColumnTable(specs);
     }
 
     /**
