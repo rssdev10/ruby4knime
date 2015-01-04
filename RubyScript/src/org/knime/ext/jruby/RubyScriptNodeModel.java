@@ -77,7 +77,7 @@ public class RubyScriptNodeModel extends NodeModel {
 
     private boolean m_snippetMode;
 
-    private static Object m_ScriptingContainerLock = new Object();
+//    private static Object m_ScriptingContainerLock = new Object();
 
     public class ScriptError {
         public int lineNum;
@@ -281,7 +281,7 @@ public class RubyScriptNodeModel extends NodeModel {
         // Container creation is failed for the first of two parallel executed.
         // Fails only first time!
         // ***********************************
-        synchronized(m_ScriptingContainerLock){
+//        synchronized(m_ScriptingContainerLock){
         container = new ScriptingContainer(
                 LocalContextScope.THREADSAFE);
         container.setCompatVersion(CompatVersion.RUBY2_0);
@@ -319,7 +319,7 @@ public class RubyScriptNodeModel extends NodeModel {
         container.put("$exec", exec);
         container.put("$node", this);
         container.put("PLUGIN_PATH", rubyPluginPath);
-        }
+//        }
 
         // ********** Script execution ***************
         String script_fn = "node_script.rb";
