@@ -11,6 +11,7 @@ package org.knime.ext.jruby;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.*;
 import java.io.BufferedReader;
@@ -69,7 +70,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
     private JCheckBox m_appendColsCB;
     private RubyScriptNodeFactory m_factory;
 
-    private JTable m_columnTable;
+    private JTable[] m_columnTables;
 
     /**
      * New pane for configuring ScriptedNode node dialog.
@@ -265,7 +266,17 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         scriptMainPanel.add(splitPane, BorderLayout.CENTER);
 
         // add output column list
-        JPanel inputColumnsPanel = addColumnPane("Input[0] columns: ");
+        int num = m_factory.getModel().getInputPortRoles().length;
+        m_columnTables = new JTable[num];
+
+        JPanel inputColumnsPanel = new JPanel();
+        inputColumnsPanel.setLayout(new BoxLayout(inputColumnsPanel, BoxLayout.PAGE_AXIS));
+        inputColumnsPanel.setMinimumSize(new Dimension(20, 150));
+
+        for (int i = 0; i < num; i++) {
+            inputColumnsPanel.add(addColumnPane(
+                    String.format("Input[%d] columns: ", i), i));
+        }
 
         // add flow variables
         JPanel flowVariablesPanel = addFlowVariablesPane("Flow variables: ");
@@ -298,7 +309,7 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
      * @param list of columns
      * @return JPanel
      */
-    private final JPanel addColumnPane(String label) {
+    private final JPanel addColumnPane(String label, int index) {
         JPanel panel = new JPanel(new BorderLayout());
         JTable table = new JTable();
         table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
@@ -320,19 +331,21 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         // inputColumnsPanel.add(m_inpputColumnsTable.getTableHeader(),
         // BorderLayout.PAGE_START);
         panel.add(scrollPane, BorderLayout.CENTER);
-        m_columnTable = table;
+        m_columnTables[index] = table;
         return panel;
     }
 
     private final void updateColumnTable(final DataTableSpec[] specs) {
-        if (specs != null && specs.length > 0) {
-            ScriptNodeOutputColumnsTableModel model = 
-                    (ScriptNodeOutputColumnsTableModel) (m_columnTable.getModel());
-            model.clearRows();
-            for (Iterator<DataColumnSpec> item = specs[0].iterator(); item
-                    .hasNext();) {
-                DataColumnSpec spec = item.next();
-                model.addRow(spec.getName(), spec.getType().toString());
+        if (specs != null) {
+            for (int i = 0; i < specs.length; i++) {
+                ScriptNodeOutputColumnsTableModel model = 
+                        (ScriptNodeOutputColumnsTableModel) (m_columnTables[i].getModel());
+                model.clearRows();
+                for (Iterator<DataColumnSpec> item = specs[i].iterator(); item
+                        .hasNext();) {
+                    DataColumnSpec spec = item.next();
+                    model.addRow(spec.getName(), spec.getType().toString());
+                }
             }
         }
     }
