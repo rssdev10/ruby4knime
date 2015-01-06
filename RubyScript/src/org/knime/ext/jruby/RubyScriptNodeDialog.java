@@ -18,9 +18,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.AbstractAction;
@@ -54,6 +52,10 @@ import org.fife.ui.rsyntaxtextarea.*;
 public class RubyScriptNodeDialog extends NodeDialogPane {
 
     private final static String TEMPLATE_FLOW_VAR = "FlowVariableList['%s'] ";
+    // rules from knime.rb:
+    //   name = str.gsub(/[^[[:word:]]]/, '_').gsub(/\_+/, '_').chomp('_')
+    //   define_method("i#{i}_#{name}") where #{i} - index of the input port
+    private final static String TEMPLATE_COLUMN_NAME = "i%d_%s ";
 
     private static NodeLogger logger = NodeLogger
             .getLogger(RubyScriptNodeDialog.class);
@@ -323,6 +325,37 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         model.addColumn("Column type");
         model.setReadOnly(true);
         table.setModel(model);
+
+        // dblclick on a table's row
+        table.addMouseListener(new MouseAdapter() {
+            private int m_index;
+            public void mouseClicked(MouseEvent event) {
+                if (event.getClickCount() == 2) {
+                    JTable table = (JTable) event.getSource();
+                    Point p = event.getPoint();
+                    int row = table.rowAtPoint(p);
+                    if (row >= 0) {
+                        String name = table.getModel().getValueAt(row, 0)
+                                .toString();
+                        if (name.length() > 0) {
+                            // see knime.rb rules
+                            name = name.replaceAll("[^\\p{Alnum}]", "_")
+                                    .replaceAll("\\_+", "_");
+                            if (name.charAt(name.length() - 1) == '_')
+                                name = name.substring(0, name.length() - 1);
+
+                            m_scriptTextArea.insert(String.format(
+                                    TEMPLATE_COLUMN_NAME, m_index, name),
+                                    m_scriptTextArea.getCaretPosition());
+                        }
+                    }
+                }
+            }
+            private MouseAdapter init(int index){
+                m_index = index;
+                return this;
+            }
+        }.init(index));
 
         JScrollPane scrollPane = new JScrollPane(table);
         table.setFillsViewportHeight(true);
