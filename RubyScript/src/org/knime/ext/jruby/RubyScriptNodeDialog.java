@@ -405,11 +405,13 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
                     JTable table = (JTable) event.getSource();
                     Point p = event.getPoint();
                     int row = table.rowAtPoint(p);
-
-                    m_scriptTextArea.insert(
-                            String.format(TEMPLATE_FLOW_VAR, table.getModel()
-                                    .getValueAt(row, 0).toString()),
-                            m_scriptTextArea.getCaretPosition());
+                    if (row >= 0) {
+                        m_scriptTextArea.insert(
+                                String.format(TEMPLATE_FLOW_VAR, table
+                                        .getModel().getValueAt(row, 0)
+                                        .toString()),
+                                m_scriptTextArea.getCaretPosition());
+                    }
                 }
             }
         });
