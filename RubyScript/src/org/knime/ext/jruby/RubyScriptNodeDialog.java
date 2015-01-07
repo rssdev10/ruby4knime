@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.swing.AbstractAction;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
@@ -100,10 +100,8 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         m_appendColsCB = new JCheckBox("Append columns to input table spec");
         newtableCBPanel.add(m_appendColsCB, BorderLayout.WEST);
 
-        JButton addButton = new JButton(new AbstractAction() {
-
-            private static final long serialVersionUID = -743704737927962277L;
-
+        JButton addButton = new JButton("Add Output Column");
+        addButton.addActionListener( new ActionListener() {
             public void actionPerformed(final ActionEvent e) {
                 String name;
                 ScriptNodeOutputColumnsTableModel model = ((ScriptNodeOutputColumnsTableModel) m_table
@@ -126,12 +124,9 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
                 model.addRow(name, "String");
             }
         });
-        addButton.setText("Add Output Column");
 
-        JButton removeButton = new JButton(new AbstractAction() {
-
-            private static final long serialVersionUID = 743704737927962277L;
-
+        JButton removeButton = new JButton("Remove Output Column");
+        removeButton.addActionListener( new ActionListener() {
             public void actionPerformed(final ActionEvent e) {
                 int[] selectedRows = m_table.getSelectedRows();
                 logger.debug("selectedRows = " + selectedRows);
@@ -148,10 +143,41 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
                 }
             }
         });
-        removeButton.setText("Remove Output Column");
+
+        JButton upButton = new JButton("Up");
+        upButton.addActionListener(new ActionListener() {
+            public void actionPerformed(final ActionEvent e) {
+                int[] selectedRows = m_table.getSelectedRows();
+                logger.debug("selectedRows = " + selectedRows);
+
+                if (selectedRows.length == 0) {
+                    return;
+                }
+                ((ScriptNodeOutputColumnsTableModel) m_table.getModel())
+                        .moveRowsUp(selectedRows);
+            }
+        });
+
+        JButton downButton = new JButton("Down");
+        downButton.addActionListener(new ActionListener() {
+            public void actionPerformed(final ActionEvent e) {
+                int[] selectedRows = m_table.getSelectedRows();
+                logger.debug("selectedRows = " + selectedRows);
+
+                if (selectedRows.length == 0) {
+                    return;
+                }
+
+                ((ScriptNodeOutputColumnsTableModel) m_table.getModel())
+                        .moveRowsDown(selectedRows);
+            }
+        });
 
         outputButtonPanel.add(addButton);
         outputButtonPanel.add(removeButton);
+        outputButtonPanel.add(Box.createHorizontalStrut(40));
+        outputButtonPanel.add(upButton);
+        outputButtonPanel.add(downButton);
 
         m_table = new JTable();
         m_table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
@@ -211,9 +237,8 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         JPanel scriptButtonPanel = new JPanel();
 
         // script load button
-        JButton scriptButton = new JButton(new AbstractAction() {
-
-            private static final long serialVersionUID = 6097485154386131768L;
+        JButton scriptButton = new JButton("Load Script from File");
+        scriptButton.addActionListener( new ActionListener() {
             private JFileChooser fileChooser = new JFileChooser();
 
             public void actionPerformed(final ActionEvent e) {
@@ -252,7 +277,6 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
                 clearErrorHighlight();
             }
         });
-        scriptButton.setText("Load Script from File");
         scriptButtonPanel.add(scriptButton);
 
         JPanel scriptMainPanel = new JPanel(new BorderLayout());
@@ -273,7 +297,9 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
 
         JPanel inputColumnsPanel = new JPanel();
         inputColumnsPanel.setLayout(new BoxLayout(inputColumnsPanel, BoxLayout.PAGE_AXIS));
-        inputColumnsPanel.setMinimumSize(new Dimension(20, 150));
+
+        if (num > 0)
+            inputColumnsPanel.setMinimumSize(new Dimension(20, 150));
 
         for (int i = 0; i < num; i++) {
             inputColumnsPanel.add(addColumnPane(

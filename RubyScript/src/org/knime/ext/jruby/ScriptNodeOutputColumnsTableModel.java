@@ -32,7 +32,7 @@ public class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
         return !m_readOnly;
     }
 
-    public final void setReadOnly(boolean readOnly){
+    public final void setReadOnly(boolean readOnly) {
         m_readOnly = readOnly;
     }
 
@@ -86,5 +86,21 @@ public class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
 
     public final void clearRows() {
         data = new ArrayList<ArrayList<Object>>();
+    }
+
+    public final void moveRowsUp(int[] rows) {
+        for (int j = 0; j < rows.length; j++) {
+            if (rows[j] != 0)
+                Collections.swap(data, rows[j], rows[j] - 1);
+        }
+        fireTableDataChanged();
+    }
+
+    public final void moveRowsDown(int[] rows) {
+        for (int j = rows.length - 1; j >= 0; j--) {
+            if (rows[j] != data.size() - 1)
+                Collections.swap(data, rows[j], rows[j] + 1);
+        }
+        fireTableDataChanged();
     }
 }
