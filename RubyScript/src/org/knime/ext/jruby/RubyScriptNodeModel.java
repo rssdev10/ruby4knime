@@ -142,6 +142,10 @@ public class RubyScriptNodeModel extends NodeModel {
                     .format("#     outContainer%d - container housing output DataTable %d\n", i, i+1));
         }
         buffer.append("#\n");
+        buffer.append("#  Flow variables:\n");
+        buffer.append("#     puts FlowVariableList['knime.workspace'] # reading \n");
+        buffer.append("#     FlowVariableList['filename'] = '1.txt'   # writing \n");
+        buffer.append("#\n#\n");
 
         if (m_snippetMode) {
             buffer.append("# Snippet intended for operations with one row.\n"
