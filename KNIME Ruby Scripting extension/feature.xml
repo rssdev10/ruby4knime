@@ -2,7 +2,7 @@
 <feature
       id="ruby4knime.feature"
       label="Ruby Scripting Extension"
-      version="0.0.5.qualifier"
+      version="0.0.6.qualifier"
       license-feature="org.eclipse.platform"
       license-feature-version="3.7.2.v20120207-1839-9gF7UHPDFxGjd-PqDr2jX_4yKaumkoHTz04_q-q">
 
@@ -11,7 +11,7 @@
    </description>
 
    <copyright>
-      rss, 2014
+      rss, 2014, 2015
    </copyright>
 
    <license url="http://www.apache.org/licenses/LICENSE-2.0">
