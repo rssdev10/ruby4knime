@@ -17,8 +17,15 @@ It is possible to configure an Output table with any types of columns.
 
 See [Ruby wrapper](RubyScript/rb/README.rdoc)
 
+
+![Ruby4KNIME code tab](doc/pics/r4k_script.png)
+
 ## Installation
 [Download binary](https://drive.google.com/folderview?id=0Bwx0cbtdU5K6TklLRG90cm5HbFk)
+
+Current version - 0.0.6 2015/01/11. See [changelog](CHANGELOG.md).
+
+
 
 Install this archive as [KNIME extension](http://www.knime.org/downloads/update).
 
