@@ -5,7 +5,7 @@ Bundle-SymbolicName: org.knime.ext.jruby; singleton:=true
 Bundle-Version: 0.0.6
 Bundle-ClassPath: rubyscript.jar,
  lib/rsyntaxtextarea.jar,
- lib/jruby-complete-1.7.18.jar
+ lib/jruby.jar
 Bundle-Activator: org.knime.ext.jruby.RubyScriptNodePlugin
 Bundle-Vendor: 
 Require-Bundle: org.eclipse.core.runtime,
@@ -13,6 +13,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.knime.workbench.repository,
  org.knime.base,
  org.eclipse.ui,
- org.knime.ext.textprocessing;resolution:=optional
+ org.knime.ext.textprocessing;resolution:=optional,
+ org.scala-ide.scala.library
 Bundle-ActivationPolicy: lazy
 Export-Package: org.knime.ext.jruby

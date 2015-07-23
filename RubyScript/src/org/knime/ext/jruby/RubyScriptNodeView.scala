@@ -1,21 +1,40 @@
+package org.knime.ext.jruby
+
+import org.knime.core.node.NodeView
+
+class RubyScriptNodeView protected (nodeModel: RubyScriptNodeModel) extends NodeView[RubyScriptNodeModel](nodeModel) {
+
+  protected override def modelChanged() {
+    val nodeModel = getNodeModel.asInstanceOf[RubyScriptNodeModel]
+    assert(nodeModel != null)
+  }
+
+  protected override def onClose() {
+  }
+
+  protected override def onOpen() {
+  }
+
+/*
+Original Java:
 package org.knime.ext.jruby;
 
 import org.knime.core.node.NodeView;
 
-/**
+|**
  * <code>NodeView</code> for the "RubyScript" Node.
  * 
  * 
  * @author
- */
+ *|
 public class RubyScriptNodeView extends NodeView<RubyScriptNodeModel> {
 
-    /**
+    |**
      * Creates a new view.
      * 
      * @param nodeModel
      *            The model (class: {@link RubyScriptNodeModel})
-     */
+     *|
     protected RubyScriptNodeView(final RubyScriptNodeModel nodeModel) {
         super(nodeModel);
 
@@ -23,9 +42,9 @@ public class RubyScriptNodeView extends NodeView<RubyScriptNodeModel> {
 
     }
 
-    /**
+    |**
      * {@inheritDoc}
-     */
+     *|
     @Override
     protected final void modelChanged() {
 
@@ -39,22 +58,25 @@ public class RubyScriptNodeView extends NodeView<RubyScriptNodeModel> {
 
     }
 
-    /**
+    |**
      * {@inheritDoc}
-     */
+     *|
     @Override
     protected void onClose() {
 
         // TODO things to do when closing the view
     }
 
-    /**
+    |**
      * {@inheritDoc}
-     */
+     *|
     @Override
     protected void onOpen() {
 
         // TODO things to do when opening the view
     }
 
+}
+
+*/
 }
