@@ -70,11 +70,11 @@ class RubyScriptNodeModel (
     var m_snippetMode: Boolean
     ) extends NodeModel(m_numInputs, m_numOutputs) {
 
-  protected var m_scriptHeader: String = buffer.toString
+  protected var m_scriptHeader: String = ""
 
   protected var m_scriptFooter: String = ""
 
-  protected var m_script: String = buffer.toString
+  protected var m_script: String = ""
 
   protected var m_scriptFirstLineNumber: Int = 1
 
@@ -122,6 +122,7 @@ class RubyScriptNodeModel (
     buffer.append("func = ->(row) do \n")
     m_scriptFirstLineNumber += 1
   }
+  m_scriptHeader = buffer.toString()
 
   buffer = new StringBuffer()
 
@@ -176,6 +177,8 @@ class RubyScriptNodeModel (
       buffer.append("end")
     }
   }
+
+  m_script = buffer.toString()
 
   if (m_snippetMode) {
     buffer = new StringBuffer()
