@@ -7,18 +7,18 @@ import org.knime.ext.jruby.RubyScriptNodeModel._
 
 class RubyScriptNodeFactory extends NodeFactory[RubyScriptNodeModel] {
 
-  private var m_model: RubyScriptNodeModel = _
+  private var model: RubyScriptNodeModel = _
 
-  private var m_dialog: RubyScriptNodeDialog = _
+  private var dialog: RubyScriptNodeDialog = _
 
-  protected def setModel(model: RubyScriptNodeModel): RubyScriptNodeModel = {
-    m_model = model
+  protected def setModel(inModel: RubyScriptNodeModel): RubyScriptNodeModel = {
+    model = inModel
     model
   }
 
-  def getModel(): RubyScriptNodeModel = m_model
+  def getModel(): RubyScriptNodeModel = model
 
-  def getDialog(): RubyScriptNodeDialog = m_dialog
+  def getDialog(): RubyScriptNodeDialog = dialog
 
   override def createNodeModel(): RubyScriptNodeModel = {
     setModel(new RubyScriptNodeModel(1, 1, false))
@@ -26,15 +26,13 @@ class RubyScriptNodeFactory extends NodeFactory[RubyScriptNodeModel] {
 
   override def getNrNodeViews(): Int = 0
 
-  override def createNodeView(viewIndex: Int, nodeModel: RubyScriptNodeModel): NodeView[RubyScriptNodeModel] = {
-    null
-  }
+  override def createNodeView(viewIndex: Int, nodeModel: RubyScriptNodeModel): NodeView[RubyScriptNodeModel] = null
 
   override def hasDialog(): Boolean = true
 
   override def createNodeDialogPane(): NodeDialogPane = {
-    m_dialog = new RubyScriptNodeDialog(this)
-    m_dialog
+    dialog = new RubyScriptNodeDialog(this)
+    dialog
   }
 
 /*

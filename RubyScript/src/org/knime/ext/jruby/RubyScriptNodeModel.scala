@@ -38,64 +38,56 @@ import scala.collection.JavaConversions._
 object RubyScriptNodeModel {
 
   val SCRIPT = "script"
-
   val APPEND_COLS = "append_columns"
-
   val COLUMN_NAMES = "new_column_names"
-
   val COLUMN_TYPES = "new_column_types"
 
-  private var m_logger: NodeLogger = NodeLogger.getLogger(classOf[RubyScriptNodeModel])
+  private var logger: NodeLogger = NodeLogger.getLogger(classOf[RubyScriptNodeModel])
 
-  private var m_javaExtDirsExtensionsPath: String = _
+  private var javaExtDirsExtensionsPath: String = _
 
-  private var m_javaClasspathExtensionsPath: String = _
+  private var javaClasspathExtensionsPath: String = _
 
   def setJavaExtDirsExtensionPath(path: String) {
-    m_javaExtDirsExtensionsPath = path
+    javaExtDirsExtensionsPath = path
   }
 
-  def getJavaExtDirsExtensionPath(): String = m_javaExtDirsExtensionsPath
+  def getJavaExtDirsExtensionPath(): String = javaExtDirsExtensionsPath
 
   def setJavaClasspathExtensionPath(path: String) {
-    m_javaClasspathExtensionsPath = path
+    javaClasspathExtensionsPath = path
   }
 
-  def getJavaClasspathExtensionPath(): String = m_javaClasspathExtensionsPath
+  def getJavaClasspathExtensionPath(): String = javaClasspathExtensionsPath
 }
 
 class RubyScriptNodeModel (
-    var m_numInputs: Int, 
-    var m_numOutputs: Int, 
-    var m_snippetMode: Boolean
-    ) extends NodeModel(m_numInputs, m_numOutputs) {
+    var numInputs: Int,
+    var numOutputs: Int,
+    var snippetMode: Boolean
+    ) extends NodeModel(numInputs, numOutputs) {
 
-  protected var m_scriptHeader: String = ""
+  protected var scriptHeader: String = ""
 
-  protected var m_scriptFooter: String = ""
+  protected var scriptFooter: String = ""
 
-  protected var m_script: String = ""
+  protected var script: String = ""
 
-  protected var m_scriptFirstLineNumber: Int = 1
+  protected var scriptFirstLineNumber: Int = 1
 
-  protected var m_appendCols: Boolean = true
+  protected var appendCols: Boolean = true
 
-  protected var m_columnNames: Array[String] = _
+  protected var columnNames: Array[String] = _
 
-  protected var m_columnTypes: Array[String] = _
+  protected var columnTypes: Array[String] = _
 
   class ScriptError {
 
     var lineNum: Int = _
-
     var columnNum: Int = _
-
     var `type`: String = _
-
     var text: String = _
-
     var trace: String = _
-
     var msg: String = _
 
     clear()
@@ -110,89 +102,97 @@ class RubyScriptNodeModel (
     }
   }
 
-  private var m_script_error: ScriptError = new ScriptError()
+  private var script_error: ScriptError = new ScriptError()
 
-  def getErrorData(): ScriptError = m_script_error
+  def getErrorData(): ScriptError = script_error
 
-  var buffer = new StringBuffer()
+  var buffer = new StringBuilder()
 
-  buffer.append("require PLUGIN_PATH+'/rb/knime.rb'\n")
+  buffer ++= "require PLUGIN_PATH+'/rb/knime.rb'\n"
 
-  if (m_snippetMode == true) {
-    buffer.append("func = ->(row) do \n")
-    m_scriptFirstLineNumber += 1
+  if (snippetMode == true) {
+    buffer ++= "func = ->(row) do \n"
+    scriptFirstLineNumber += 1
   }
-  m_scriptHeader = buffer.toString()
+  scriptHeader = buffer.toString()
 
-  buffer = new StringBuffer()
-
-  buffer.append("# Available scripting variables:\n")
-
-  for (i <- 0 until m_numInputs) {
-    buffer.append("#     inData%d - input DataTable %d\n".format(i, i + 1))
+  buffer = new StringBuilder()
+  buffer ++= "# Available scripting variables:\n"
+  for (i <- 0 until numInputs) {
+    buffer ++= "#     inData%d - input DataTable %d\n".format(i, i + 1)
   }
-
-  buffer.append("#     outContainer - container housing output DataTable" + " (the same as outContainer0)\n")
-
-  for (i <- 0 until m_numOutputs) {
-    buffer.append("#     outContainer%d - container housing output DataTable %d\n".format(i, i + 1))
+  buffer ++= "#     outContainer - container housing output DataTable (the same as outContainer0)\n"
+  for (i <- 0 until numOutputs) {
+    buffer ++= "#     outContainer%d - container housing output DataTable %d\n".format(i, i + 1)
   }
 
-  buffer.append("#\n")
+  buffer ++= "#\n"
+  buffer ++= "#  Flow variables:\n"
+  buffer ++= "#     puts FlowVariableList['knime.workspace'] # reading \n"
+  buffer ++= "#     FlowVariableList['filename'] = '1.txt'   # writing \n"
+  buffer ++= "#\n#\n"
 
-  buffer.append("#  Flow variables:\n")
-
-  buffer.append("#     puts FlowVariableList['knime.workspace'] # reading \n")
-
-  buffer.append("#     FlowVariableList['filename'] = '1.txt'   # writing \n")
-
-  buffer.append("#\n#\n")
-
-  if (m_snippetMode) {
-    buffer.append("# Snippet intended for operations with one row.\n" + "# This code places in the special lambda function with argument named row.\n" + "# The lambda function must return the row by any available for Ruby ways.\n" + "#\n" + "# Example script. " + "Add new two columns with String and Int types from current row:\n" + "#   row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n" + "#\n")
-    buffer.append("# Default snippet (copy existing row):\n")
-    buffer.append("#\n\n")
-    buffer.append("  row")
+  if (snippetMode) {
+    buffer ++= "# Snippet intended for operations with one row.\n"
+    buffer ++= "# This code places in the special lambda function with argument named row.\n"
+    buffer ++= "# The lambda function must return the row by any available for Ruby ways.\n"
+    buffer ++= "#\n" + "# Example script. "
+    buffer ++= "Add new two columns with String and Int types from current row:\n"
+    buffer ++= "#   row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n"
+    buffer ++= "#\n"
+    buffer ++= "# Default snippet (copy existing row):\n"
+    buffer ++= "#\n\n"
+    buffer ++= "  row"
   } else {
-    if (m_numInputs > 0) {
-      buffer.append("# Example starter script. " + "Add values for new two columns with String and Int types:\n" + "#\n" + "# count = $in_data_0.length\n" + "# $in_data_0.each_with_index do |row, i|\n" + "#   $out_data_0 << " + "row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n" + "#   setProgress \"#{i*100/count}%\" if i%100 != 0\n" + "# end\n" + "#\n")
-      buffer.append("# Default script:\n")
-      buffer.append("#\n\n")
-      buffer.append("$in_data_0.each do |row|\n")
-      buffer.append("    $out_data_0 << row\n")
-      buffer.append("end")
+    if (numInputs > 0) {
+      buffer ++= "# Example starter script. "
+      buffer ++= "Add values for new two columns with String and Int types:\n"
+      buffer ++= "#\n"
+      buffer ++= "# count = $in_data_0.length\n"
+      buffer ++= "# $in_data_0.each_with_index do |row, i|\n"
+      buffer ++= "#   $out_data_0 << " +
+      buffer ++= "row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n"
+      buffer ++= "#   setProgress \"#{i*100/count}%\" if i%100 != 0\n"
+      buffer ++= "# end\n"
+      buffer ++= "#\n"
+      buffer ++= "# Default script:\n"
+      buffer ++= "#\n\n"
+      buffer ++= "$in_data_0.each do |row|\n"
+      buffer ++= "    $out_data_0 << row\n"
+      buffer ++= "end"
     } else {
-      buffer.append("# Example starter script. " + "Add values for new two columns with String and Int types:\n")
-      buffer.append("#\n")
-      buffer.append("# count = 100000\n")
-      buffer.append("# count.times do |i|\n")
-      buffer.append("#   $out_data_0 << Cells.new.string('Hi!').int(rand i))\n")
-      buffer.append("#   setProgress \"#{i*100/count}%\" if i%100 != 0\n")
-      buffer.append("# end\n")
-      buffer.append("#\n")
-      buffer.append("# Default script:\n")
-      buffer.append("#\n\n")
-      buffer.append("10.times do |i|\n")
-      buffer.append("    $outContainer << Cells.new.int(i)\n")
-      buffer.append("end")
+      buffer ++= "# Example starter script. "
+      buffer ++= "Add values for new two columns with String and Int types:\n"
+      buffer ++= "#\n"
+      buffer ++= "# count = 100000\n"
+      buffer ++= "# count.times do |i|\n"
+      buffer ++= "#   $out_data_0 << Cells.new.string('Hi!').int(rand i))\n"
+      buffer ++= "#   setProgress \"#{i*100/count}%\" if i%100 != 0\n"
+      buffer ++= "# end\n"
+      buffer ++= "#\n"
+      buffer ++= "# Default script:\n"
+      buffer ++= "#\n\n"
+      buffer ++= "10.times do |i|\n"
+      buffer ++= "    $outContainer << Cells.new.int(i)\n"
+      buffer ++= "end"
     }
   }
 
-  m_script = buffer.toString()
+  script = buffer.toString()
 
-  if (m_snippetMode) {
-    buffer = new StringBuffer()
-    buffer.append("end\n")
-    buffer.append("snippet_runner &func\n")
-    m_scriptFooter = buffer.toString
+  if (snippetMode) {
+    buffer = new StringBuilder()
+    buffer ++= "end\n"
+    buffer ++= "snippet_runner &func\n"
+    scriptFooter = buffer.toString
   }
 
   override protected def execute(inData: Array[BufferedDataTable], exec: ExecutionContext): Array[BufferedDataTable] = {
     var i: Int = 0
-    val outSpecs = configure(if (m_numInputs > 0) Array(inData(0).getDataTableSpec) else null)
-    val outContainer = Array.ofDim[DataContainer](m_numOutputs)
+    val outSpecs = configure(if (numInputs > 0) Array(inData(0).getDataTableSpec) else null)
+    val outContainer = Array.ofDim[DataContainer](numOutputs)
     i = 0
-    while (i < m_numOutputs) {
+    while (i < numOutputs) {
       outContainer(i) = new DataContainer(outSpecs(i))
       i += 1
     }
@@ -234,35 +234,35 @@ class RubyScriptNodeModel (
     container.setCompatVersion(CompatVersion.RUBY2_0)
     container.setCompileMode(CompileMode.JIT)
     container.setLoadPaths(classpath)
-    container.setOutput(new LoggerOutputStream(m_logger, NodeLogger.LEVEL.WARN))
-    container.setError(new LoggerOutputStream(m_logger, NodeLogger.LEVEL.ERROR))
-    container.put("$num_inputs", m_numInputs)
+    container.setOutput(new LoggerOutputStream(logger, NodeLogger.LEVEL.WARN))
+    container.setError(new LoggerOutputStream(logger, NodeLogger.LEVEL.ERROR))
+    container.put("$num_inputs", numInputs)
     container.put("$input_datatable_arr", inData)
     i = 0
-    while (i < m_numInputs) {
+    while (i < numInputs) {
       container.put("$inData%d".format(i), inData(i))
       container.put("$in_data_%d".format(i), inData(i))
       i += 1
     }
     container.put("$output_datatable_arr", outContainer)
     i = 0
-    while (i < m_numOutputs) {
+    while (i < numOutputs) {
       container.put("$outContainer%d".format(i), outContainer(i))
       container.put("$out_data_%d".format(i), outContainer(i))
       i += 1
     }
     container.put("$outContainer", outContainer(0))
-    container.put("$outColumnNames", m_columnNames)
-    container.put("$outColumnTypes", m_columnTypes)
-    container.put("$num_outputs", m_numOutputs)
+    container.put("$outColumnNames", columnNames)
+    container.put("$outColumnTypes", columnTypes)
+    container.put("$num_outputs", numOutputs)
     container.put("$exec", exec)
     container.put("$node", this)
     container.put("PLUGIN_PATH", rubyPluginPath)
     val script_fn = "node_script.rb"
     try {
-      m_script_error.clear()
+      script_error.clear()
       container.setScriptFilename(script_fn)
-      val unit = container.parse(m_scriptHeader + m_script + m_scriptFooter, -m_scriptFirstLineNumber)
+      val unit = container.parse(scriptHeader + script + scriptFooter, -scriptFirstLineNumber)
       unit.run()
     } catch {
       case e: Exception => {
@@ -270,17 +270,17 @@ class RubyScriptNodeModel (
         val matcher = p.matcher(e.toString)
         if (matcher.find()) {
           val exitCode = java.lang.Integer.parseInt(matcher.group(1))
-          m_logger.debug("Exit code: " + exitCode)
+          logger.debug("Exit code: " + exitCode)
         } else {
           findErrorSource(e, script_fn)
-          m_logger.error("Script error in line: " + m_script_error.lineNum)
+          logger.error("Script error in line: " + script_error.lineNum)
         }
         throw new CanceledExecutionException(e.getMessage)
       }
     }
-    val result = Array.ofDim[BufferedDataTable](m_numOutputs)
+    val result = Array.ofDim[BufferedDataTable](numOutputs)
     i = 0
-    while (i < m_numOutputs) {
+    while (i < numOutputs) {
       outContainer(i).close()
       result(i) = exec.createBufferedDataTable(outContainer(i).getTable, exec)
       i += 1
@@ -289,35 +289,32 @@ class RubyScriptNodeModel (
   }
 
   override protected def configure(inSpecs: Array[DataTableSpec]): Array[DataTableSpec] = {
-    m_appendCols &= m_numInputs > 0
-    var newSpec = if (m_appendCols) inSpecs(0) else new DataTableSpec()
-    if (m_columnNames == null) {
+    appendCols &= numInputs > 0
+    var newSpec = if (appendCols) inSpecs(0) else new DataTableSpec()
+    if (columnNames == null) {
       return Array(newSpec)
     }
-    for (i <- 0 until m_columnNames.length) {
+    for (i <- 0 until columnNames.length) {
       var `type` = StringCell.TYPE
-      var columnType = m_columnTypes(i)
-      if ("String" == columnType) {
-        columnType = classOf[StringCell].getName
-      } else if ("Integer" == columnType) {
-        columnType = classOf[IntCell].getName
-      } else if ("Double" == columnType) {
-        columnType = classOf[DoubleCell].getName
+      var columnType:String = columnTypes(i) match {
+        case "String" => classOf[StringCell].getName
+        case "Integer" => classOf[IntCell].getName
+        case "Double" => classOf[DoubleCell].getName
       }
 /* Workaround!!!!
       val cls = Class.forName(columnType)
       if (classOf[org.knime.core.data.DataCell].isAssignableFrom(cls)) `type` = DataType.getType(cls) 
       else throw new InvalidSettingsException(columnType + " does not extend org.knime.core.data.DataCell class.")
 */    
-      if (m_columnTypes(i) != columnType) m_columnTypes(i) = columnType
-      val newColumn = new DataColumnSpecCreator(m_columnNames(i), `type`).createSpec()
+      if (columnTypes(i) != columnType) columnTypes(i) = columnType
+      val newColumn = new DataColumnSpecCreator(columnNames(i), `type`).createSpec()
       newSpec = AppendedColumnTable.getTableSpec(newSpec, newColumn)
     }
-    if (m_script == null) {
-      m_script = ""
+    if (script == null) {
+      script = ""
     }
-    val result = Array.ofDim[DataTableSpec](m_numOutputs)
-    for (i <- 0 until m_numOutputs) {
+    val result = Array.ofDim[DataTableSpec](numOutputs)
+    for (i <- 0 until numOutputs) {
       result(i) = newSpec
     }
     result
@@ -333,18 +330,18 @@ class RubyScriptNodeModel (
   }
 
   protected def saveSettingsTo(settings: NodeSettingsWO) {
-    settings.addString(SCRIPT, m_script)
-    settings.addBoolean(APPEND_COLS, m_appendCols)
-    settings.addStringArray(COLUMN_NAMES, m_columnNames:_*)
-    settings.addStringArray(COLUMN_TYPES, m_columnTypes:_*)
+    settings.addString(SCRIPT, script)
+    settings.addBoolean(APPEND_COLS, appendCols)
+    settings.addStringArray(COLUMN_NAMES, columnNames:_*)
+    settings.addStringArray(COLUMN_TYPES, columnTypes:_*)
   }
 
   protected def loadValidatedSettingsFrom(settings: NodeSettingsRO) {
-    m_script = settings.getString(SCRIPT)
-    m_appendCols = settings.getBoolean(APPEND_COLS, true)
-    m_columnNames = settings.getStringArray(COLUMN_NAMES)
-    m_columnTypes = settings.getStringArray(COLUMN_TYPES)
-    m_script_error.clear()
+    script = settings.getString(SCRIPT)
+    appendCols = settings.getBoolean(APPEND_COLS, true)
+    columnNames = settings.getStringArray(COLUMN_NAMES)
+    columnTypes = settings.getStringArray(COLUMN_TYPES)
+    script_error.clear()
   }
 
   protected def validateSettings(settings: NodeSettingsRO) {
@@ -359,45 +356,45 @@ class RubyScriptNodeModel (
       val pLineS = Pattern.compile("(?<=:)(\\d+):(.*)")
       val mLine = pLineS.matcher(err)
       if (mLine.find()) {
-        m_logger.debug("SyntaxError error line: " + mLine.group(1))
-        m_script_error.text = if (mLine.group(2) == null) m_script_error.text else mLine.group(2)
-        m_logger.debug("SyntaxError: " + m_script_error.text)
-        m_script_error.lineNum = java.lang.Integer.parseInt(mLine.group(1))
-        m_script_error.columnNum = -1
-        m_script_error.`type` = "SyntaxError"
+        logger.debug("SyntaxError error line: " + mLine.group(1))
+        script_error.text = if (mLine.group(2) == null) script_error.text else mLine.group(2)
+        logger.debug("SyntaxError: " + script_error.text)
+        script_error.lineNum = java.lang.Integer.parseInt(mLine.group(1))
+        script_error.columnNum = -1
+        script_error.`type` = "SyntaxError"
       }
     } else {
       val `type` = Pattern.compile("(?<=\\()(\\w*)")
       val mLine = `type`.matcher(err)
       if (mLine.find()) {
-        m_script_error.`type` = mLine.group(1)
+        script_error.`type` = mLine.group(1)
       }
       val cause = thr.getCause
       for (line <- cause.getStackTrace if line.getFileName == filename) {
-        m_script_error.text = cause.getMessage
-        m_script_error.columnNum = -1
-        m_script_error.lineNum = line.getLineNumber
-        m_script_error.text = thr.getMessage
+        script_error.text = cause.getMessage
+        script_error.columnNum = -1
+        script_error.lineNum = line.getLineNumber
+        script_error.text = thr.getMessage
         val knimeType = Pattern.compile("(?<=org.knime.)(.*)(?=:)")
-        val mKnimeType = knimeType.matcher(m_script_error.text)
+        val mKnimeType = knimeType.matcher(script_error.text)
         if (mKnimeType.find()) {
-          m_script_error.`type` = mKnimeType.group(1)
+          script_error.`type` = mKnimeType.group(1)
         }
-        m_script_error.`type` = "RuntimeError"
+        script_error.`type` = "RuntimeError"
         //break
       }
     }
-    m_script_error.msg = "script"
-    if (m_script_error.lineNum != -1) {
-      m_script_error.msg += " stopped with error in line " + m_script_error.lineNum
-      if (m_script_error.columnNum != -1) {
-        m_script_error.msg += " at column " + m_script_error.columnNum
+    script_error.msg = "script"
+    if (script_error.lineNum != -1) {
+      script_error.msg += " stopped with error in line " + script_error.lineNum
+      if (script_error.columnNum != -1) {
+        script_error.msg += " at column " + script_error.columnNum
       }
     } else {
-      m_script_error.msg += "] stopped with error at line --unknown--"
+      script_error.msg += "] stopped with error at line --unknown--"
     }
-    if (m_script_error.`type` == "RuntimeError") {
-      m_logger.error(m_script_error.msg + "\n" + m_script_error.`type` + " ( " + m_script_error.text + " )")
+    if (script_error.`type` == "RuntimeError") {
+      logger.error(script_error.msg + "\n" + script_error.`type` + " ( " + script_error.text + " )")
       val cause = thr.getCause
       val stack = cause.getStackTrace
       val builder = new StringBuilder()
@@ -411,16 +408,20 @@ class RubyScriptNodeModel (
         builder.append(line.getFileName)
         builder.append('\n')
       }
-      m_script_error.trace = builder.toString
-      if (m_script_error.trace.length > 0) {
-        m_logger.error("\n--- Traceback --- error source first\n" + "line:   class ( method )    file \n" + m_script_error.trace + "--- Traceback --- end --------------")
+      script_error.trace = builder.toString
+      if (script_error.trace.length > 0) {
+        logger.error(
+            "\n--- Traceback --- error source first\n" +
+            "line:   class ( method )    file \n" +
+            script_error.trace +
+            "--- Traceback --- end --------------")
       }
-    } else if (m_script_error.`type` != "SyntaxError") {
-      m_logger.error(m_script_error.msg)
-      m_logger.error("Could not evaluate error source nor reason. Analyze StackTrace!")
-      m_logger.error(err)
+    } else if (script_error.`type` != "SyntaxError") {
+      logger.error(script_error.msg)
+      logger.error("Could not evaluate error source nor reason. Analyze StackTrace!")
+      logger.error(err)
     }
-    m_script_error.lineNum
+    script_error.lineNum
   }
 
 /*
