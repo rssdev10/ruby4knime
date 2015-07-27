@@ -68,43 +68,88 @@ class RubyScriptNodeModel (
     ) extends NodeModel(numInputs, numOutputs) {
 
   protected var scriptHeader: String = ""
-
-  protected var scriptFooter: String = ""
-
   protected var script: String = ""
+  protected var scriptFooter: String = ""
 
   protected var scriptFirstLineNumber: Int = 1
 
   protected var appendCols: Boolean = true
 
   protected var columnNames: Array[String] = _
-
   protected var columnTypes: Array[String] = _
 
   class ScriptError {
-
-    var lineNum: Int = _
-    var columnNum: Int = _
-    var `type`: String = _
-    var text: String = _
-    var trace: String = _
-    var msg: String = _
-
-    clear()
-
-    def clear() {
-      lineNum = -1
-      columnNum = -1
-      `type` = "--UnKnown--"
-      text = "--UnKnown--"
-      trace = ""
-      msg = ""
-    }
+    var lineNum: Int = -1
+    var columnNum: Int = -1
+    var `type`: String = "--UnKnown--"
+    var text: String = "--UnKnown--"
+    var trace: String = ""
+    var msg: String = ""
   }
 
   private var script_error: ScriptError = new ScriptError()
 
   def getErrorData(): ScriptError = script_error
+
+  protected val templateFlowVar =
+"""#
+#  Flow variables:
+#     puts FlowVariableList['knime.workspace'] # reading
+#     FlowVariableList['filename'] = '1.txt'   # writing
+#"""
+
+  protected val templateSnippet =
+"""#
+# Snippet intended for operations with one row.
+# This code places in the special lambda function with argument named row.
+# The lambda function must return the row by any available for Ruby ways.
+#
+# Example script. Add new two columns with String and Int types from current row:
+#   row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))
+#
+# Default snippet (copy existing row):
+#
+
+row
+"""
+
+  protected val templateScriptMultiInput =
+"""# Example starter script.
+# Add values for new two columns with String and Int types:
+#
+# count = $in_data_0.length
+# $in_data_0.each_with_index do |row, i|
+#   $out_data_0 << row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))
+#   setProgress "#{i*100/count}%" if i%100 != 0
+# end
+#
+# Default script:
+#
+
+
+$in_data_0.each do |row|
+    $out_data_0 << row
+end
+"""
+
+  protected val templateScript =
+"""# Example starter script.
+# Add values for new two columns with String and Int types:
+#
+# count = 100000
+# count.times do |i|
+#   $out_data_0 << Cells.new.string('Hi!').int(rand i))
+#   setProgress "#{i*100/count}%" if i%100 != 0
+# end
+#
+# Default script:
+#
+
+
+10.times do |i|
+    $outContainer << Cells.new.int(i)
+end
+"""
 
   var buffer = new StringBuilder()
 
@@ -126,65 +171,23 @@ class RubyScriptNodeModel (
     buffer ++= "#     outContainer%d - container housing output DataTable %d\n".format(i, i + 1)
   }
 
-  buffer ++= "#\n"
-  buffer ++= "#  Flow variables:\n"
-  buffer ++= "#     puts FlowVariableList['knime.workspace'] # reading \n"
-  buffer ++= "#     FlowVariableList['filename'] = '1.txt'   # writing \n"
-  buffer ++= "#\n#\n"
+  buffer ++= templateFlowVar
 
   if (snippetMode) {
-    buffer ++= "# Snippet intended for operations with one row.\n"
-    buffer ++= "# This code places in the special lambda function with argument named row.\n"
-    buffer ++= "# The lambda function must return the row by any available for Ruby ways.\n"
-    buffer ++= "#\n" + "# Example script. "
-    buffer ++= "Add new two columns with String and Int types from current row:\n"
-    buffer ++= "#   row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n"
-    buffer ++= "#\n"
-    buffer ++= "# Default snippet (copy existing row):\n"
-    buffer ++= "#\n\n"
-    buffer ++= "  row"
+    buffer ++= templateSnippet
   } else {
     if (numInputs > 0) {
-      buffer ++= "# Example starter script. "
-      buffer ++= "Add values for new two columns with String and Int types:\n"
-      buffer ++= "#\n"
-      buffer ++= "# count = $in_data_0.length\n"
-      buffer ++= "# $in_data_0.each_with_index do |row, i|\n"
-      buffer ++= "#   $out_data_0 << " +
-      buffer ++= "row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n"
-      buffer ++= "#   setProgress \"#{i*100/count}%\" if i%100 != 0\n"
-      buffer ++= "# end\n"
-      buffer ++= "#\n"
-      buffer ++= "# Default script:\n"
-      buffer ++= "#\n\n"
-      buffer ++= "$in_data_0.each do |row|\n"
-      buffer ++= "    $out_data_0 << row\n"
-      buffer ++= "end"
+      buffer ++= templateScriptMultiInput
     } else {
-      buffer ++= "# Example starter script. "
-      buffer ++= "Add values for new two columns with String and Int types:\n"
-      buffer ++= "#\n"
-      buffer ++= "# count = 100000\n"
-      buffer ++= "# count.times do |i|\n"
-      buffer ++= "#   $out_data_0 << Cells.new.string('Hi!').int(rand i))\n"
-      buffer ++= "#   setProgress \"#{i*100/count}%\" if i%100 != 0\n"
-      buffer ++= "# end\n"
-      buffer ++= "#\n"
-      buffer ++= "# Default script:\n"
-      buffer ++= "#\n\n"
-      buffer ++= "10.times do |i|\n"
-      buffer ++= "    $outContainer << Cells.new.int(i)\n"
-      buffer ++= "end"
+      buffer ++= templateScript
     }
   }
-
   script = buffer.toString()
 
   if (snippetMode) {
-    buffer = new StringBuilder()
-    buffer ++= "end\n"
-    buffer ++= "snippet_runner &func\n"
-    scriptFooter = buffer.toString
+    scriptFooter =
+      "end\n" +
+        "snippet_runner &func\n"
   }
 
   override protected def execute(inData: Array[BufferedDataTable], exec: ExecutionContext): Array[BufferedDataTable] = {
@@ -260,7 +263,7 @@ class RubyScriptNodeModel (
     container.put("PLUGIN_PATH", rubyPluginPath)
     val script_fn = "node_script.rb"
     try {
-      script_error.clear()
+      script_error = new ScriptError()
       container.setScriptFilename(script_fn)
       val unit = container.parse(scriptHeader + script + scriptFooter, -scriptFirstLineNumber)
       unit.run()
@@ -341,7 +344,7 @@ class RubyScriptNodeModel (
     appendCols = settings.getBoolean(APPEND_COLS, true)
     columnNames = settings.getStringArray(COLUMN_NAMES)
     columnTypes = settings.getStringArray(COLUMN_TYPES)
-    script_error.clear()
+    script_error = new ScriptError()
   }
 
   protected def validateSettings(settings: NodeSettingsRO) {
