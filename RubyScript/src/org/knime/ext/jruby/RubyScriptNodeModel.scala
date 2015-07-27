@@ -34,6 +34,7 @@ import org.knime.core.data.`def`.DoubleCell
 import org.knime.core.data.`def`.IntCell
 import org.knime.ext.jruby.preferences.PreferenceConstants
 import scala.collection.JavaConversions._
+import scala.util.matching.Regex
 
 object RubyScriptNodeModel {
 
@@ -356,34 +357,49 @@ end
   private def findErrorSource(thr: Throwable, filename: String): Int = {
     val err = thr.getMessage
     if (err.startsWith("(SyntaxError)")) {
-      val pLineS = Pattern.compile("(?<=:)(\\d+):(.*)")
-      val mLine = pLineS.matcher(err)
-      if (mLine.find()) {
-        logger.debug("SyntaxError error line: " + mLine.group(1))
-        script_error.text = if (mLine.group(2) == null) script_error.text else mLine.group(2)
-        logger.debug("SyntaxError: " + script_error.text)
-        script_error.lineNum = java.lang.Integer.parseInt(mLine.group(1))
-        script_error.columnNum = -1
-        script_error.`type` = "SyntaxError"
+//      val pLineS = Pattern.compile("(?<=:)(\\d+):(.*)")
+//      val mLine = pLineS.matcher(err)
+//      if (mLine.find()) {
+//        logger.debug("SyntaxError error line: " + mLine.group(1))
+//        script_error.text = if (mLine.group(2) == null) script_error.text else mLine.group(2)
+//        logger.debug("SyntaxError: " + script_error.text)
+//        script_error.lineNum = java.lang.Integer.parseInt(mLine.group(1))
+//        script_error.columnNum = -1
+//        script_error.`type` = "SyntaxError"
+//      }
+      val pLineS = """(?<=:)(\d+):(.*)""".r
+      err match {
+        case pLineS(line, text) =>
+	        logger.debug("SyntaxError error line: " + line)
+	        if (text != null) script_error.text = text 
+	        logger.debug("SyntaxError: " + script_error.text)
+	        script_error.lineNum = line.toInt
+	        script_error.columnNum = -1
+	        script_error.`type` = "SyntaxError"
       }
+
     } else {
-      val `type` = Pattern.compile("(?<=\\()(\\w*)")
-      val mLine = `type`.matcher(err)
-      if (mLine.find()) {
-        script_error.`type` = mLine.group(1)
-      }
+//      val `type` = Pattern.compile("(?<=\\()(\\w*)")
+//      val mLine = `type`.matcher(err)
+//      if (mLine.find()) {
+//        script_error.`type` = mLine.group(1)
+//      }
+      script_error.`type` = """(?<=\()(\w*)""".r
+        .findFirstMatchIn(err).map(_ group 2).getOrElse(script_error.`type`)
+
       val cause = thr.getCause
       for (line <- cause.getStackTrace if line.getFileName == filename) {
         script_error.text = cause.getMessage
         script_error.columnNum = -1
         script_error.lineNum = line.getLineNumber
         script_error.text = thr.getMessage
-        val knimeType = Pattern.compile("(?<=org.knime.)(.*)(?=:)")
-        val mKnimeType = knimeType.matcher(script_error.text)
-        if (mKnimeType.find()) {
-          script_error.`type` = mKnimeType.group(1)
-        }
-        script_error.`type` = "RuntimeError"
+        //        val knimeType = Pattern.compile("(?<=org.knime.)(.*)(?=:)")
+        //        val mKnimeType = knimeType.matcher(script_error.text)
+        //        script_error.`type` = 
+        //          if (mKnimeType.find()) mKnimeType.group(1) else "RuntimeError"
+
+        script_error.`type` = """(?<=org.knime.)(.*)(?=:)""".r
+          .findFirstMatchIn(err).map(_ group 1).getOrElse("RuntimeError")
         //break
       }
     }
