@@ -200,12 +200,12 @@ end
   override protected def execute(inData: Array[BufferedDataTable], exec: ExecutionContext): Array[BufferedDataTable] = {
     var i: Int = 0
     val outSpecs = configure(if (numInputs > 0) Array(inData(0).getDataTableSpec) else null)
-    val outContainer = Array.ofDim[DataContainer](numOutputs)
-    i = 0
-    while (i < numOutputs) {
-      outContainer(i) = new DataContainer(outSpecs(i))
-      i += 1
-    }
+    val outContainer = Array.tabulate(numOutputs) { i => new DataContainer(outSpecs(i)) }
+
+//    val outContainer = Array.ofDim[DataContainer](numOutputs)
+//    for (i <- 0 to numOutputs - 1) {
+//      outContainer(i) = new DataContainer(outSpecs(i))
+//    }
     val fileSep = System.getProperty("file.separator")
     val core = Platform.getBundle("org.knime.core")
     val coreClassPath = core.getHeaders.get("Bundle-Classpath").toString
@@ -219,20 +219,29 @@ end
     ext.append(basePluginPath + fileSep + "lib")
     ext.append(corePluginPath + fileSep + "lib")
     ext.append(getJavaExtDirsExtensionPath)
-    val classpath = new ArrayList[String]()
-    for (s <- coreClassPath.split(",")) {
-      val u = FileLocator.find(core, new Path(s), null)
-      if (u != null) {
-        classpath.add(FileLocator.resolve(u).getFile)
-      }
-    }
+
+    val classpath = coreClassPath.split(",").view
+      .map(s => FileLocator.find(core, new Path(s), null)).filter(_ != null)
+      .map(FileLocator.resolve(_).getFile)
+
+//    val classpath = new ArrayList[String]()
+//    for (s <- coreClassPath.split(",")) {
+//      val u = FileLocator.find(core, new Path(s), null)
+//      if (u != null) {
+//        classpath.add(FileLocator.resolve(u).getFile)
+//      }
+//    }
     classpath.add(corePluginPath + fileSep + "bin")
-    for (s <- baseClassPath.split(",")) {
-      val u = FileLocator.find(base, new Path(s), null)
-      if (u != null) {
-        classpath.add(FileLocator.resolve(u).getFile)
-      }
-    }
+    baseClassPath.split(",").view
+      .map(s => FileLocator.find(base, new Path(s), null)).filter(_ != null)
+      .foreach { u => classpath.add(FileLocator.resolve(u).getFile) }
+
+//    for (s <- baseClassPath.split(",")) {
+//      val u = FileLocator.find(base, new Path(s), null)
+//      if (u != null) {
+//        classpath.add(FileLocator.resolve(u).getFile)
+//      }
+//    }
     classpath.add(basePluginPath + fileSep + "bin")
     classpath.add(getJavaClasspathExtensionPath)
     if (RubyScriptNodePlugin.getDefault.getPreferenceStore.getBoolean(PreferenceConstants.JRUBY_USE_EXTERNAL_GEMS)) {
@@ -288,13 +297,16 @@ end
         throw new CanceledExecutionException(e.getMessage)
       }
     }
-    val result = Array.ofDim[BufferedDataTable](numOutputs)
-    i = 0
-    while (i < numOutputs) {
+    val result = Array.tabulate(numOutputs) { i =>
       outContainer(i).close()
-      result(i) = exec.createBufferedDataTable(outContainer(i).getTable, exec)
-      i += 1
+      exec.createBufferedDataTable(outContainer(i).getTable, exec)
     }
+
+//    val result = Array.ofDim[BufferedDataTable](numOutputs)
+//    for (i <- 0 to numOutputs - 1) {
+//      outContainer(i).close()
+//      result(i) = exec.createBufferedDataTable(outContainer(i).getTable, exec)
+//    }
     result
   }
 
