@@ -174,15 +174,21 @@ end
 
   buffer ++= templateFlowVar
 
-  if (snippetMode) {
-    buffer ++= templateSnippet
-  } else {
-    if (numInputs > 0) {
-      buffer ++= templateScriptMultiInput
-    } else {
-      buffer ++= templateScript
-    }
-  }
+  buffer ++= (snippetMode match {
+    case true => templateSnippet
+    case _ if (numInputs > 0) => templateScriptMultiInput
+    case _ => templateScript
+  })
+
+//  if (snippetMode) {
+//    buffer ++= templateSnippet
+//  } else {
+//    if (numInputs > 0) {
+//      buffer ++= templateScriptMultiInput
+//    } else {
+//      buffer ++= templateScript
+//    }
+//  }
   script = buffer.toString()
 
   if (snippetMode) {
@@ -324,9 +330,6 @@ end
     result
   }
 
-  protected def reset() {
-  }
-
   protected override def loadInternals(nodeInternDir: File, exec: ExecutionMonitor) {
   }
 
@@ -403,15 +406,21 @@ end
         //break
       }
     }
-    script_error.msg = "script"
-    if (script_error.lineNum != -1) {
-      script_error.msg += " stopped with error in line " + script_error.lineNum
-      if (script_error.columnNum != -1) {
-        script_error.msg += " at column " + script_error.columnNum
-      }
-    } else {
-      script_error.msg += "] stopped with error at line --unknown--"
-    }
+    script_error.msg = "script" + (script_error.lineNum match {
+      case -1 => "] stopped with error at line --unknown--"
+      case _ =>
+        " stopped with error in line " + script_error.lineNum +
+          (if (script_error.columnNum != -1) " at column " + script_error.columnNum)
+    })
+
+//    if (script_error.lineNum != -1) {
+//      script_error.msg += " stopped with error in line " + script_error.lineNum
+//      if (script_error.columnNum != -1) {
+//        script_error.msg += " at column " + script_error.columnNum
+//      }
+//    } else {
+//      script_error.msg += "] stopped with error at line --unknown--"
+//    }
     if (script_error.`type` == "RuntimeError") {
       logger.error(script_error.msg + "\n" + script_error.`type` + " ( " + script_error.text + " )")
       val cause = thr.getCause
