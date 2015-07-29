@@ -21,15 +21,11 @@ class LoggerOutputStream(
     if (str.endsWith("\n")) {
       str = str.substring(0, str.length - 1)
     }
-    if (str.length == 0) return
-    if (level == NodeLogger.LEVEL.INFO) {
-      logger.info(str)
-    } else if (level == NodeLogger.LEVEL.WARN) {
-      logger.warn(str)
-    } else if (level == NodeLogger.LEVEL.ERROR) {
-      logger.error(str)
-    } else {
-      logger.debug(str)
+    if (!str.isEmpty()) level match {
+      case NodeLogger.LEVEL.INFO => logger.info(str)
+      case NodeLogger.LEVEL.WARN => logger.warn(str)
+      case NodeLogger.LEVEL.ERROR => logger.error(str)
+      case _ => logger.debug(str)
     }
   }
 
