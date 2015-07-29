@@ -1,3 +1,96 @@
+package org.knime.ext.jruby
+
+import javax.swing.table._
+import java.util._
+//remove if not needed
+import scala.collection.JavaConversions._
+
+@SerialVersionUID(3748218863796706007L)
+class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
+
+  private var data: ArrayList[ArrayList[Any]] = new ArrayList[ArrayList[Any]]()
+
+  private var columnNames: ArrayList[String] = new ArrayList[String]()
+
+  private var m_readOnly: Boolean = false
+
+  def getColumnName(col: Int): String = columnNames.get(col).toString
+
+  def getRowCount(): Int = data.size
+
+  def getColumnCount(): Int = columnNames.size
+
+  def getValueAt(row: Int, col: Int): AnyRef = {
+    val rowList = data.get(row)
+    rowList.get(col).asInstanceOf[AnyRef]
+  }
+
+  def isCellEditable(row: Int, col: Int): Boolean = !m_readOnly
+
+  def setReadOnly(readOnly: Boolean) {
+    m_readOnly = readOnly
+  }
+
+  def setValueAt(value: AnyRef, row: Int, col: Int) {
+    val rowList = data.get(row)
+    rowList.set(col, value)
+    fireTableCellUpdated(row, col)
+  }
+
+  def addRow(dataTableColumnName: AnyRef, dataTableColumnType: AnyRef) {
+    val row = new ArrayList[Any]()
+    row.add(dataTableColumnName)
+    row.add(dataTableColumnType)
+    data.add(row)
+    val rowNum = data.size - 1
+    fireTableRowsInserted(rowNum, rowNum)
+  }
+
+  def removeRow(row: Int) {
+    data.remove(row)
+    fireTableRowsDeleted(row, row)
+  }
+
+  def addColumn(columnName: String) {
+    columnNames.add(columnName)
+  }
+
+  def getDataTableColumnNames(): Array[String] = getDataTableValues(0)
+
+  def getDataTableColumnTypes(): Array[String] = getDataTableValues(1)
+
+  private def getDataTableValues(colIndex: Int): Array[String] = {
+    val dataTableColumnValues = Array.ofDim[String](data.size)
+    val i = data.iterator()
+    var rowNum = 0
+    while (i.hasNext) {
+      val row = i.next()
+      dataTableColumnValues(rowNum) = row.get(colIndex).asInstanceOf[String]
+      rowNum += 1
+    }
+    dataTableColumnValues
+  }
+
+  def clearRows() {
+    data = new ArrayList[ArrayList[Any]]()
+  }
+
+  def moveRowsUp(rows: Array[Int]) {
+    for (j <- 0 until rows.length if rows(j) != 0) Collections.swap(data, rows(j), rows(j) - 1)
+    fireTableDataChanged()
+  }
+
+  def moveRowsDown(rows: Array[Int]) {
+    var j = rows.length - 1
+    while (j >= 0) {
+      if (rows(j) != data.size - 1) Collections.swap(data, rows(j), rows(j) + 1)
+      j -= 1
+    }
+    fireTableDataChanged()
+  }
+
+/*
+Original Java:
 package org.knime.ext.jruby;
 
 import javax.swing.table.*;
@@ -103,4 +196,7 @@ public class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
         }
         fireTableDataChanged();
     }
+}
+
+*/
 }
