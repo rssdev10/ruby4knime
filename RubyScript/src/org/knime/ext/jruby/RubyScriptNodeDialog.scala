@@ -38,6 +38,7 @@ import org.fife.ui.rsyntaxtextarea._
 import RubyScriptNodeDialog._
 //remove if not needed
 import scala.collection.JavaConversions._
+import scala.collection.convert.WrapAsScala.enumerationAsScalaIterator
 
 object RubyScriptNodeDialog {
 
@@ -301,9 +302,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
         val model = (columnTables(i).getModel)
           .asInstanceOf[ScriptNodeOutputColumnsTableModel]
         model.clearRows()
-        var item = specs(i).iterator()
-        while (item.hasNext) {
-          val spec = item.next()
+        for (spec <- specs(i)) {
           model.addRow(spec.getName, spec.getType.toString)
         }
       }
@@ -336,9 +335,8 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
       }
     })
     val flow_variables = factory.getModel.getAvailableFlowVariables
-    var i = flow_variables.values.iterator()
-    while (i.hasNext) {
-      val varDescr = i.next()
+
+    for (varDescr <- flow_variables.values) {
       table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel]
         .addRow(varDescr.getName, varDescr.getStringValue)
     }
