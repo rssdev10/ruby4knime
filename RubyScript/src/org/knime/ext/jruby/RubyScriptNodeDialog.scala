@@ -48,23 +48,23 @@ object RubyScriptNodeDialog {
   private var logger: NodeLogger = NodeLogger.getLogger(classOf[RubyScriptNodeDialog])
 }
 
-class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extends NodeDialogPane() {
+class RubyScriptNodeDialog (private var factory: RubyScriptNodeFactory) extends NodeDialogPane() {
 
-  private var m_scriptPanel: JPanel = _
+  private var scriptPanel: JPanel = _
 
-  private var m_scriptTextArea: RSyntaxTextArea = _
+  private var scriptTextArea: RSyntaxTextArea = _
 
-  private var m_errorMessage: JTextArea = _
+  private var errorMessage: JTextArea = _
 
-  private var m_sp_errorMessage: JScrollPane = _
+  private var spErrorMessage: JScrollPane = _
 
-  private var m_table: JTable = _
+  private var table: JTable = _
 
-  private var m_counter: Int = 1
+  private var columnCounter: Int = 1
 
-  private var m_appendColsCB: JCheckBox = _
+  private var doAppendInputColumns: JCheckBox = _
 
-  private var m_columnTables: Array[JTable] = _
+  private var columnTables: Array[JTable] = _
 
   createColumnSelectionTab()
 
@@ -76,20 +76,20 @@ class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extend
     val outputButtonPanel = new JPanel()
     val outputMainPanel = new JPanel(new BorderLayout())
     val newtableCBPanel = new JPanel()
-    m_appendColsCB = new JCheckBox("Append columns to input table spec")
-    newtableCBPanel.add(m_appendColsCB, BorderLayout.WEST)
+    doAppendInputColumns = new JCheckBox("Append columns to input table spec")
+    newtableCBPanel.add(doAppendInputColumns, BorderLayout.WEST)
     val addButton = new JButton("Add Output Column")
     addButton.addActionListener(new ActionListener() {
 
       def actionPerformed(e: ActionEvent) {
         var name: String = null
-        val model = m_table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel]
+        val model = table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel]
         val columns = model.getDataTableColumnNames
         var found: Boolean = false
         do {
           found = false
-          name = "script output " + m_counter
-          m_counter += 1
+          name = "script output " + columnCounter
+          columnCounter += 1
           for (s <- columns if name == s) {
             found = true
             //break
@@ -102,7 +102,7 @@ class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extend
     removeButton.addActionListener(new ActionListener() {
 
       def actionPerformed(e: ActionEvent) {
-        val selectedRows = m_table.getSelectedRows
+        val selectedRows = table.getSelectedRows
         logger.debug("selectedRows = " + selectedRows)
         if (selectedRows.length == 0) {
           return
@@ -110,7 +110,7 @@ class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extend
         var i = selectedRows.length - 1
         while (i >= 0) {
           logger.debug("   removal " + i + ": removing row " + selectedRows(i))
-          m_table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].removeRow(selectedRows(i))
+          table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].removeRow(selectedRows(i))
           i -= 1
         }
       }
@@ -119,46 +119,50 @@ class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extend
     upButton.addActionListener(new ActionListener() {
 
       def actionPerformed(e: ActionEvent) {
-        val selectedRows = m_table.getSelectedRows
+        val selectedRows = table.getSelectedRows
         logger.debug("selectedRows = " + selectedRows)
         if (selectedRows.length == 0) {
           return
         }
-        m_table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].moveRowsUp(selectedRows)
+        table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].moveRowsUp(selectedRows)
       }
     })
     val downButton = new JButton("Down")
     downButton.addActionListener(new ActionListener() {
 
       def actionPerformed(e: ActionEvent) {
-        val selectedRows = m_table.getSelectedRows
+        val selectedRows = table.getSelectedRows
         logger.debug("selectedRows = " + selectedRows)
         if (selectedRows.length == 0) {
           return
         }
-        m_table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].moveRowsDown(selectedRows)
+        table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].moveRowsDown(selectedRows)
       }
     })
-    outputButtonPanel.add(addButton)
-    outputButtonPanel.add(removeButton)
-    outputButtonPanel.add(Box.createHorizontalStrut(40))
-    outputButtonPanel.add(upButton)
-    outputButtonPanel.add(downButton)
-    m_table = new JTable()
-    m_table.putClientProperty("terminateEditOnFocusLost", true)
-    m_table.setAutoscrolls(true)
+
+    Array(addButton, removeButton, Box.createHorizontalStrut(40),
+      upButton, downButton).foreach(outputButtonPanel.add)
+
+//    outputButtonPanel.add(addButton)
+//    outputButtonPanel.add(removeButton)
+//    outputButtonPanel.add(Box.createHorizontalStrut(40))
+//    outputButtonPanel.add(upButton)
+//    outputButtonPanel.add(downButton)
+    table = new JTable()
+    table.putClientProperty("terminateEditOnFocusLost", true)
+    table.setAutoscrolls(true)
     val model = new ScriptNodeOutputColumnsTableModel()
     model.addColumn("Column name")
     model.addColumn("Column type")
-    model.addRow("script output " + m_counter, "String")
-    m_counter += 1
-    m_table.setModel(model)
-    outputMainPanel.add(m_table.getTableHeader, BorderLayout.PAGE_START)
-    outputMainPanel.add(m_table, BorderLayout.CENTER)
+    model.addRow("script output " + columnCounter, "String")
+    columnCounter += 1
+    table.setModel(model)
+    outputMainPanel.add(table.getTableHeader, BorderLayout.PAGE_START)
+    outputMainPanel.add(table, BorderLayout.CENTER)
     outputPanel.add(newtableCBPanel)
     outputPanel.add(outputButtonPanel)
     outputPanel.add(outputMainPanel)
-    val typeColumn = m_table.getColumnModel.getColumn(1)
+    val typeColumn = table.getColumnModel.getColumn(1)
     val typeSelector = new JComboBox[String]()
     typeSelector.addItem("String")
     typeSelector.addItem("Integer")
@@ -169,19 +173,19 @@ class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extend
   }
 
   private def createScriptTab() {
-    m_errorMessage = new JTextArea()
-    m_sp_errorMessage = new JScrollPane(m_errorMessage)
-    m_scriptTextArea = new RSyntaxTextArea()
-    m_scriptTextArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_RUBY)
-    m_scriptTextArea.setCodeFoldingEnabled(true)
-    m_scriptTextArea.setAntiAliasingEnabled(true)
-    val spScript = new RTextScrollPane(m_scriptTextArea)
+    errorMessage = new JTextArea()
+    spErrorMessage = new JScrollPane(errorMessage)
+    scriptTextArea = new RSyntaxTextArea()
+    scriptTextArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_RUBY)
+    scriptTextArea.setCodeFoldingEnabled(true)
+    scriptTextArea.setAntiAliasingEnabled(true)
+    val spScript = new RTextScrollPane(scriptTextArea)
     spScript.setFoldIndicatorEnabled(true)
     val font = new Font(Font.MONOSPACED, Font.PLAIN, 12)
-    m_errorMessage.setFont(font)
-    m_errorMessage.setForeground(Color.RED)
-    m_errorMessage.setEditable(false)
-    m_scriptPanel = new JPanel(new BorderLayout())
+    errorMessage.setFont(font)
+    errorMessage.setForeground(Color.RED)
+    errorMessage.setEditable(false)
+    scriptPanel = new JPanel(new BorderLayout())
     val scriptButtonPanel = new JPanel()
     val scriptButton = new JButton("Load Script from File")
     scriptButton.addActionListener(new ActionListener() {
@@ -209,17 +213,17 @@ class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extend
         } catch {
           case exc: IOException => exc.printStackTrace()
         }
-        m_scriptTextArea.setText(buffer.toString)
+        scriptTextArea.setText(buffer.toString)
         clearErrorHighlight()
       }
     })
     scriptButtonPanel.add(scriptButton)
     val scriptMainPanel = new JPanel(new BorderLayout())
     scriptMainPanel.add(new JLabel("Script: "), BorderLayout.NORTH)
-    var splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, spScript, m_sp_errorMessage)
+    var splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, spScript, spErrorMessage)
     scriptMainPanel.add(splitPane, BorderLayout.CENTER)
-    val num = m_factory.getModel.getInputPortRoles.length
-    m_columnTables = Array.ofDim[JTable](num)
+    val num = factory.getModel.getInputPortRoles.length
+    columnTables = Array.ofDim[JTable](num)
     val inputColumnsPanel = new JPanel()
     inputColumnsPanel.setLayout(new BoxLayout(inputColumnsPanel, BoxLayout.PAGE_AXIS))
     if (num > 0) inputColumnsPanel.setMinimumSize(new Dimension(20, 150))
@@ -229,9 +233,9 @@ class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extend
     val flowVariablesPanel = addFlowVariablesPane("Flow variables: ")
     splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, inputColumnsPanel, flowVariablesPanel)
     splitPane.setDividerLocation(splitPane.getSize().height - splitPane.getInsets().bottom - splitPane.getDividerSize - 50)
-    m_scriptPanel.add(scriptButtonPanel, BorderLayout.PAGE_START)
-    m_scriptPanel.add(scriptMainPanel, BorderLayout.CENTER)
-    val config_and_sript = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, splitPane, m_scriptPanel)
+    scriptPanel.add(scriptButtonPanel, BorderLayout.PAGE_START)
+    scriptPanel.add(scriptMainPanel, BorderLayout.CENTER)
+    val config_and_sript = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, splitPane, scriptPanel)
     config_and_sript.setDividerLocation(200)
     addTab("Script", config_and_sript, false)
   }
@@ -260,7 +264,7 @@ class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extend
             if (name.length > 0) {
               name = name.replaceAll("[^\\p{Alnum}]", "_").replaceAll("\\_+", "_")
               if (name.charAt(name.length - 1) == '_') name = name.substring(0, name.length - 1)
-              m_scriptTextArea.insert(TEMPLATE_COLUMN_NAME.format(m_index, name), m_scriptTextArea.getCaretPosition)
+              scriptTextArea.insert(TEMPLATE_COLUMN_NAME.format(m_index, name), scriptTextArea.getCaretPosition)
             }
           }
         }
@@ -275,7 +279,7 @@ class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extend
     table.setFillsViewportHeight(true)
     panel.add(new JLabel(label), BorderLayout.NORTH)
     panel.add(scrollPane, BorderLayout.CENTER)
-    m_columnTables(index) = table
+    columnTables(index) = table
     panel
   }
 
@@ -311,12 +315,12 @@ class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extend
           val p = event.getPoint
           val row = table.rowAtPoint(p)
           if (row >= 0) {
-            m_scriptTextArea.insert(String.format(TEMPLATE_FLOW_VAR, table.getModel.getValueAt(row, 0).toString), m_scriptTextArea.getCaretPosition)
+            scriptTextArea.insert(String.format(TEMPLATE_FLOW_VAR, table.getModel.getValueAt(row, 0).toString), scriptTextArea.getCaretPosition)
           }
         }
       }
     })
-    val flow_variables = m_factory.getModel.getAvailableFlowVariables
+    val flow_variables = factory.getModel.getAvailableFlowVariables
     var i = flow_variables.values.iterator()
     while (i.hasNext) {
       val `var` = i.next()
@@ -334,12 +338,12 @@ class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extend
     if (script == null) {
       script = ""
     }
-    m_scriptTextArea.setText(script)
+    scriptTextArea.setText(script)
     clearErrorHighlight()
-    val error = m_factory.getModel.getErrorData
+    val error = factory.getModel.getErrorData
     if (error.lineNum != -1) {
       try {
-        m_scriptTextArea.addLineHighlight(error.lineNum - 1, Color.red)
+        scriptTextArea.addLineHighlight(error.lineNum - 1, Color.red)
       } catch {
         case e1: BadLocationException => 
       }
@@ -347,49 +351,49 @@ class RubyScriptNodeDialog (private var m_factory: RubyScriptNodeFactory) extend
       outstr.append(error.text)
       outstr.append("\nline:\t class ( method )\t file\n")
       outstr.append(error.trace)
-      m_errorMessage.setText(outstr.toString)
-      m_sp_errorMessage.setVisible(true)
+      errorMessage.setText(outstr.toString)
+      spErrorMessage.setVisible(true)
       setSelected("Script")
     }
     val appendCols = settings.getBoolean(RubyScriptNodeModel.APPEND_COLS, true)
-    m_appendColsCB.setSelected(appendCols)
+    doAppendInputColumns.setSelected(appendCols)
     val dataTableColumnNames = settings.getStringArray(RubyScriptNodeModel.COLUMN_NAMES, Array.ofDim[String](0):_*)
     val dataTableColumnTypes = settings.getStringArray(RubyScriptNodeModel.COLUMN_TYPES, Array.ofDim[String](0):_*)
-    m_table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].clearRows()
+    table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].clearRows()
     if (dataTableColumnNames == null) {
       return
     }
     for (i <- 0 until dataTableColumnNames.length) {
-      m_table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].addRow(dataTableColumnNames(i), dataTableColumnTypes(i))
+      table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].addRow(dataTableColumnNames(i), dataTableColumnTypes(i))
     }
     updateColumnTable(specs)
   }
 
   protected def saveSettingsTo(settings: NodeSettingsWO) {
-    val editingRow = m_table.getEditingRow
-    val editingColumn = m_table.getEditingColumn
+    val editingRow = table.getEditingRow
+    val editingColumn = table.getEditingColumn
     if (editingRow != -1 && editingColumn != -1) {
-      val editor = m_table.getCellEditor(editingRow, editingColumn)
+      val editor = table.getCellEditor(editingRow, editingColumn)
       editor.stopCellEditing()
     }
-    val scriptSetting = m_scriptTextArea.getText
+    val scriptSetting = scriptTextArea.getText
     if (scriptSetting == null || "" == scriptSetting) {
       throw new InvalidSettingsException("Please specify a script to be run.")
     }
-    settings.addString(RubyScriptNodeModel.SCRIPT, m_scriptTextArea.getText)
-    settings.addBoolean(RubyScriptNodeModel.APPEND_COLS, m_appendColsCB.isSelected)
-    val columnNames = m_table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].getDataTableColumnNames
+    settings.addString(RubyScriptNodeModel.SCRIPT, scriptTextArea.getText)
+    settings.addBoolean(RubyScriptNodeModel.APPEND_COLS, doAppendInputColumns.isSelected)
+    val columnNames = table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].getDataTableColumnNames
     settings.addStringArray(RubyScriptNodeModel.COLUMN_NAMES, columnNames:_*)
-    val columnTypes = m_table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].getDataTableColumnTypes
+    val columnTypes = table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].getDataTableColumnTypes
     settings.addStringArray(RubyScriptNodeModel.COLUMN_TYPES, columnTypes:_*)
   }
 
   protected def clearErrorHighlight() {
-    m_scriptTextArea.removeAllLineHighlights()
-    m_sp_errorMessage.setVisible(false)
-    m_errorMessage.setText("")
-    m_scriptPanel.revalidate()
-    m_scriptPanel.repaint()
+    scriptTextArea.removeAllLineHighlights()
+    spErrorMessage.setVisible(false)
+    errorMessage.setText("")
+    scriptPanel.revalidate()
+    scriptPanel.repaint()
   }
 
 /*
