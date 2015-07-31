@@ -5,8 +5,7 @@ import org.knime.core.node.NodeView
 class RubyScriptNodeView protected (nodeModel: RubyScriptNodeModel) extends NodeView[RubyScriptNodeModel](nodeModel) {
 
   protected override def modelChanged() {
-    val nodeModel = getNodeModel.asInstanceOf[RubyScriptNodeModel]
-    assert(nodeModel != null)
+    assert(getNodeModel.asInstanceOf[RubyScriptNodeModel] != null)
   }
 
   protected override def onClose() {

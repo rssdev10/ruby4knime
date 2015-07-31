@@ -43,7 +43,8 @@ object RubyScriptNodeModel {
   val COLUMN_NAMES = "new_column_names"
   val COLUMN_TYPES = "new_column_types"
 
-  private var logger: NodeLogger = NodeLogger.getLogger(classOf[RubyScriptNodeModel])
+  private var logger: NodeLogger = 
+    NodeLogger.getLogger(classOf[RubyScriptNodeModel])
 
   private var javaExtDirsExtensionsPath: String = _
 

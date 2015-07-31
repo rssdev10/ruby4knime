@@ -61,10 +61,8 @@ class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
 
   private def getDataTableValues(colIndex: Int): Array[String] = {
     val dataTableColumnValues = Array.ofDim[String](data.size)
-    val i = data.iterator()
     var rowNum = 0
-    while (i.hasNext) {
-      val row = i.next()
+    for (row <- data) {
       dataTableColumnValues(rowNum) = row.get(colIndex).asInstanceOf[String]
       rowNum += 1
     }
@@ -76,15 +74,14 @@ class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
   }
 
   def moveRowsUp(rows: Array[Int]) {
-    for (j <- 0 until rows.length if rows(j) != 0) Collections.swap(data, rows(j), rows(j) - 1)
+    for (j <- 0 until rows.length if rows(j) != 0)
+      Collections.swap(data, rows(j), rows(j) - 1)
     fireTableDataChanged()
   }
 
   def moveRowsDown(rows: Array[Int]) {
-    var j = rows.length - 1
-    while (j >= 0) {
+    for (j <- rows.length - 1 to 0) {
       if (rows(j) != data.size - 1) Collections.swap(data, rows(j), rows(j) + 1)
-      j -= 1
     }
     fireTableDataChanged()
   }

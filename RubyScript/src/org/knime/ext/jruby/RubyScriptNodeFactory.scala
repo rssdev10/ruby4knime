@@ -26,7 +26,8 @@ class RubyScriptNodeFactory extends NodeFactory[RubyScriptNodeModel] {
 
   override def getNrNodeViews(): Int = 0
 
-  override def createNodeView(viewIndex: Int, nodeModel: RubyScriptNodeModel): NodeView[RubyScriptNodeModel] = null
+  override def createNodeView(viewIndex: Int,
+    nodeModel: RubyScriptNodeModel): NodeView[RubyScriptNodeModel] = null
 
   override def hasDialog(): Boolean = true
 
