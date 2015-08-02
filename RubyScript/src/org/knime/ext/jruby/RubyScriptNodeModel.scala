@@ -318,19 +318,27 @@ end
       return Array(newSpec)
     }
     for (i <- 0 until columnNames.length) {
-      var `type` = StringCell.TYPE
+      var newColumnType = StringCell.TYPE
       var columnType:String = columnTypes(i) match {
         case "String" => classOf[StringCell].getName
         case "Integer" => classOf[IntCell].getName
         case "Double" => classOf[DoubleCell].getName
+        case _ => columnTypes(i)
       }
-/* Workaround!!!!
-      val cls = Class.forName(columnType)
-      if (classOf[org.knime.core.data.DataCell].isAssignableFrom(cls)) `type` = DataType.getType(cls) 
-      else throw new InvalidSettingsException(columnType + " does not extend org.knime.core.data.DataCell class.")
-*/    
+
+      try {
+        val cls = Class.forName(columnType)
+        if (classOf[org.knime.core.data.DataCell].isAssignableFrom(cls))
+            newColumnType = DataType.getType(cls.asInstanceOf[Class[_ <: org.knime.core.data.DataCell]])
+        else
+          throw new InvalidSettingsException(columnType + " does not extends org.knime.core.data.DataCell class.")
+      } catch {
+        case e: java.lang.ClassNotFoundException =>
+          throw new InvalidSettingsException("The class " + columnType + " not found.")
+      }
+
       if (columnTypes(i) != columnType) columnTypes(i) = columnType
-      val newColumn = new DataColumnSpecCreator(columnNames(i), `type`).createSpec()
+      val newColumn = new DataColumnSpecCreator(columnNames(i), newColumnType).createSpec()
       newSpec = AppendedColumnTable.getTableSpec(newSpec, newColumn)
     }
     if (script == null) {
@@ -463,6 +471,9 @@ end
       logger.error(err)
     }
     script_error.lineNum
+  }
+
+  protected def reset() {
   }
 
 /*
