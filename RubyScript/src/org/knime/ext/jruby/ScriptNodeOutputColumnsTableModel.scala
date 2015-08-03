@@ -14,7 +14,7 @@ class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
 
   private var m_readOnly: Boolean = false
 
-  def getColumnName(col: Int): String = columnNames.get(col).toString
+  override def getColumnName(col: Int): String = columnNames.get(col).toString
 
   def getRowCount(): Int = data.size
 
@@ -25,13 +25,13 @@ class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
     rowList.get(col).asInstanceOf[AnyRef]
   }
 
-  def isCellEditable(row: Int, col: Int): Boolean = !m_readOnly
+  override def isCellEditable(row: Int, col: Int): Boolean = !m_readOnly
 
   def setReadOnly(readOnly: Boolean) {
     m_readOnly = readOnly
   }
 
-  def setValueAt(value: AnyRef, row: Int, col: Int) {
+  override def setValueAt(value: AnyRef, row: Int, col: Int) {
     val rowList = data.get(row)
     rowList.set(col, value)
     fireTableCellUpdated(row, col)
@@ -60,13 +60,15 @@ class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
   def getDataTableColumnTypes(): Array[String] = getDataTableValues(1)
 
   private def getDataTableValues(colIndex: Int): Array[String] = {
-    val dataTableColumnValues = Array.ofDim[String](data.size)
-    var rowNum = 0
-    for (row <- data) {
-      dataTableColumnValues(rowNum) = row.get(colIndex).asInstanceOf[String]
-      rowNum += 1
-    }
-    dataTableColumnValues
+//    val dataTableColumnValues = Array.ofDim[String](data.size)
+//    var rowNum = 0
+//    for (row <- data) {
+//      dataTableColumnValues(rowNum) = row.get(colIndex).asInstanceOf[String]
+//      rowNum += 1
+//    }
+//    dataTableColumnValues
+    
+     data.map(_.get(colIndex).asInstanceOf[String]).toArray
   }
 
   def clearRows() {

@@ -83,7 +83,7 @@ class RubyScriptNodeModel (
   class ScriptError {
     var lineNum: Int = -1
     var columnNum: Int = -1
-    var `type`: String = "--UnKnown--"
+    var errType: String = "--UnKnown--"
     var text: String = "--UnKnown--"
     var trace: String = ""
     var msg: String = ""
@@ -258,18 +258,14 @@ end
     container.setError(new LoggerOutputStream(logger, NodeLogger.LEVEL.ERROR))
     container.put("$num_inputs", numInputs)
     container.put("$input_datatable_arr", inData)
-    i = 0
-    while (i < numInputs) {
+    for (i <- 0 until numInputs) {
       container.put("$inData%d".format(i), inData(i))
       container.put("$in_data_%d".format(i), inData(i))
-      i += 1
     }
     container.put("$output_datatable_arr", outContainer)
-    i = 0
-    while (i < numOutputs) {
+    for (i <- 0 until numOutputs) {
       container.put("$outContainer%d".format(i), outContainer(i))
       container.put("$out_data_%d".format(i), outContainer(i))
-      i += 1
     }
     container.put("$outContainer", outContainer(0))
     container.put("$outColumnNames", columnNames)
@@ -341,14 +337,9 @@ end
       val newColumn = new DataColumnSpecCreator(columnNames(i), newColumnType).createSpec()
       newSpec = AppendedColumnTable.getTableSpec(newSpec, newColumn)
     }
-    if (script == null) {
-      script = ""
-    }
-    val result = Array.ofDim[DataTableSpec](numOutputs)
-    for (i <- 0 until numOutputs) {
-      result(i) = newSpec
-    }
-    result
+
+    val result = for (i <- 0 until numOutputs) yield { newSpec }
+    result.toArray
   }
 
   protected override def loadInternals(nodeInternDir: File, exec: ExecutionMonitor) {
@@ -399,7 +390,8 @@ end
 	        logger.debug("SyntaxError: " + script_error.text)
 	        script_error.lineNum = line.toInt
 	        script_error.columnNum = -1
-	        script_error.`type` = "SyntaxError"
+	        script_error.errType = "SyntaxError"
+        case _ =>
       }
 
     } else {
@@ -408,24 +400,26 @@ end
 //      if (mLine.find()) {
 //        script_error.`type` = mLine.group(1)
 //      }
-      script_error.`type` = """(?<=\()(\w*)""".r
-        .findFirstMatchIn(err).map(_ group 2).getOrElse(script_error.`type`)
+      script_error.errType = """(?<=\()(\w*)""".r
+        .findFirstMatchIn(err).map(_ group 2).getOrElse(script_error.errType)
 
       val cause = thr.getCause
-      for (line <- cause.getStackTrace if line.getFileName == filename) {
-        script_error.text = cause.getMessage
-        script_error.columnNum = -1
-        script_error.lineNum = line.getLineNumber
-        script_error.text = thr.getMessage
-        //        val knimeType = Pattern.compile("(?<=org.knime.)(.*)(?=:)")
-        //        val mKnimeType = knimeType.matcher(script_error.text)
-        //        script_error.`type` = 
-        //          if (mKnimeType.find()) mKnimeType.group(1) else "RuntimeError"
-
-        script_error.`type` = """(?<=org.knime.)(.*)(?=:)""".r
-          .findFirstMatchIn(err).map(_ group 1).getOrElse("RuntimeError")
-        //break
-      }
+      cause.getStackTrace
+          .filter(line => line.getFileName == filename)
+          .map(line => {
+                script_error.text = cause.getMessage
+                script_error.columnNum = -1
+                script_error.lineNum = line.getLineNumber
+                script_error.text = thr.getMessage
+                //        val knimeType = Pattern.compile("(?<=org.knime.)(.*)(?=:)")
+                //        val mKnimeType = knimeType.matcher(script_error.text)
+                //        script_error.`type` = 
+                //          if (mKnimeType.find()) mKnimeType.group(1) else "RuntimeError"
+        
+                script_error.errType = """(?<=org.knime.)(.*)(?=:)""".r
+                  .findFirstMatchIn(err).map(_ group 1).getOrElse("RuntimeError")
+                //break
+              }).head
     }
     script_error.msg = "script" + (script_error.lineNum match {
       case -1 => "] stopped with error at line --unknown--"
@@ -442,8 +436,8 @@ end
 //    } else {
 //      script_error.msg += "] stopped with error at line --unknown--"
 //    }
-    if (script_error.`type` == "RuntimeError") {
-      logger.error(script_error.msg + "\n" + script_error.`type` + " ( " + script_error.text + " )")
+    if (script_error.errType == "RuntimeError") {
+      logger.error(script_error.msg + "\n" + script_error.errType + " ( " + script_error.text + " )")
       val cause = thr.getCause
       val stack = cause.getStackTrace
       val builder = new StringBuilder()
@@ -465,7 +459,7 @@ end
             script_error.trace +
             "--- Traceback --- end --------------")
       }
-    } else if (script_error.`type` != "SyntaxError") {
+    } else if (script_error.errType != "SyntaxError") {
       logger.error(script_error.msg)
       logger.error("Could not evaluate error source nor reason. Analyze StackTrace!")
       logger.error(err)

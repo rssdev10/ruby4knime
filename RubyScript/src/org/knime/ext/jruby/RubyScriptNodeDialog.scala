@@ -89,16 +89,10 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
         val model = table.getModel
           .asInstanceOf[ScriptNodeOutputColumnsTableModel]
         val columns = model.getDataTableColumnNames
-        var found: Boolean = false
         do {
-          found = false
           name = "script output " + columnCounter
           columnCounter += 1
-          for (s <- columns if name == s) {
-            found = true
-            //break
-          }
-        } while (found);
+        } while (columns.indexWhere(_ == name) >= 0);
         model.addRow(name, "String")
       }
     })
