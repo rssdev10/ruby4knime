@@ -36,6 +36,14 @@ import org.knime.ext.jruby.preferences.PreferenceConstants
 import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 
+/**
+ * This is the model implementation of RubyScript.
+ * 
+ * This source code based on PythonScriptNodeModel.java from org.knime.ext.jython.source_2.9.0.0040102 by Tripos
+ * 
+ * @author rss
+ * 
+ */
 object RubyScriptNodeModel {
 
   val SCRIPT = "script"
@@ -198,6 +206,9 @@ end
         "snippet_runner &func\n"
   }
 
+  /* (non-Javadoc)
+   * @see org.knime.core.node.NodeModel#execute(org.knime.core.node.BufferedDataTable[], org.knime.core.node.ExecutionContext)
+   */
   override protected def execute(inData: Array[BufferedDataTable], exec: ExecutionContext): Array[BufferedDataTable] = {
     var i: Int = 0
     val outSpecs = configure(if (numInputs > 0) Array(inData(0).getDataTableSpec) else null)
@@ -342,12 +353,21 @@ end
     result.toArray
   }
 
+  /* (non-Javadoc)
+   * @see org.knime.core.node.NodeModel#loadInternals(java.io.File, org.knime.core.node.ExecutionMonitor)
+   */
   protected override def loadInternals(nodeInternDir: File, exec: ExecutionMonitor) {
   }
 
+  /* (non-Javadoc)
+   * @see org.knime.core.node.NodeModel#saveInternals(java.io.File, org.knime.core.node.ExecutionMonitor)
+   */
   protected override def saveInternals(nodeInternDir: File, exec: ExecutionMonitor) {
   }
 
+  /* (non-Javadoc)
+   * @see org.knime.core.node.NodeModel#saveSettingsTo(org.knime.core.node.NodeSettingsWO)
+   */
   protected def saveSettingsTo(settings: NodeSettingsWO) {
     settings.addString(SCRIPT, script)
     settings.addBoolean(APPEND_COLS, appendCols)
@@ -355,6 +375,9 @@ end
     settings.addStringArray(COLUMN_TYPES, columnTypes:_*)
   }
 
+  /* (non-Javadoc)
+   * @see org.knime.core.node.NodeModel#loadValidatedSettingsFrom(org.knime.core.node.NodeSettingsRO)
+   */
   protected def loadValidatedSettingsFrom(settings: NodeSettingsRO) {
     script = settings.getString(SCRIPT)
     appendCols = settings.getBoolean(APPEND_COLS, true)
@@ -363,12 +386,21 @@ end
     script_error = new ScriptError()
   }
 
+  /* (non-Javadoc)
+   * @see org.knime.core.node.NodeModel#validateSettings(org.knime.core.node.NodeSettingsRO)
+   */
   protected def validateSettings(settings: NodeSettingsRO) {
     settings.getString(SCRIPT)
     settings.getStringArray(COLUMN_NAMES)
     settings.getStringArray(COLUMN_TYPES)
   }
 
+  /**
+   *  Process an exception stack from JRuby.
+   *  This methods searches a message at top of stack by any code
+   *  from a filename with the value of filename parameter.
+   *
+   */
   private def findErrorSource(thr: Throwable, filename: String): Int = {
     val err = thr.getMessage
     if (err.startsWith("(SyntaxError)")) {
@@ -467,6 +499,9 @@ end
     script_error.lineNum
   }
 
+  /* (non-Javadoc)
+   * @see org.knime.core.node.NodeModel#reset()
+   */
   protected def reset() {
   }
 

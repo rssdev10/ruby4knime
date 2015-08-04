@@ -40,6 +40,12 @@ import RubyScriptNodeDialog._
 import scala.collection.JavaConversions._
 import scala.collection.convert.WrapAsScala.enumerationAsScalaIterator
 
+/**
+ * <code>NodeDialog</code> for the "JRuby Script" Node.
+ * 
+ * @author rss
+ *
+ */
 object RubyScriptNodeDialog {
 
   private val TEMPLATE_FLOW_VAR = "FlowVariableList['%s'] "
@@ -73,6 +79,9 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
 
   createScriptTab()
 
+  /**
+   * Create column selection tab panel
+   */
   private def createColumnSelectionTab() {
     val outputPanel = new JPanel()
     outputPanel.setLayout(new BoxLayout(outputPanel, BoxLayout.Y_AXIS))
@@ -169,6 +178,10 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     addTab("Script Output", outputPanel)
   }
 
+  /**
+   * Create script tab panel which contains lists of columns, flow variables,
+   * Ruby script etc.
+   */
   private def createScriptTab() {
     errorMessage = new JTextArea()
     spErrorMessage = new JScrollPane(errorMessage)
@@ -243,6 +256,12 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     addTab("Script", config_and_sript, false)
   }
 
+  /**
+   * Create a panel of input columns
+   * @param label
+   * @param list of columns
+   * @return JPanel
+   */
   private def addColumnPane(label: String, index: Int): JPanel = {
     val panel = new JPanel(new BorderLayout())
     val table = new JTable()
@@ -303,6 +322,11 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     }
   }
 
+  /**
+   * Create a panel with flow variable list
+   * @param label
+   * @return JPanel
+   */
   private def addFlowVariablesPane(label: String): JPanel = {
     val flowVariablesPanel = new JPanel(new BorderLayout())
     val table = new JTable()
@@ -341,6 +365,9 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     flowVariablesPanel
   }
 
+  /* (non-Javadoc)
+   * @see org.knime.core.node.NodeDialogPane#loadSettingsFrom(org.knime.core.node.NodeSettingsRO, org.knime.core.data.DataTableSpec[])
+   */
   override protected def loadSettingsFrom(settings: NodeSettingsRO,
     specs: Array[DataTableSpec]) {
     var script = Option(settings.getString(RubyScriptNodeModel.SCRIPT, null))
@@ -381,6 +408,9 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     updateColumnTable(specs)
   }
 
+  /* (non-Javadoc)
+   * @see org.knime.core.node.NodeDialogPane#saveSettingsTo(org.knime.core.node.NodeSettingsWO)
+   */
   protected def saveSettingsTo(settings: NodeSettingsWO) {
     val editingRow = table.getEditingRow
     val editingColumn = table.getEditingColumn
@@ -403,6 +433,9 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     settings.addStringArray(RubyScriptNodeModel.COLUMN_TYPES, columnTypes: _*)
   }
 
+  /**
+   * Delete highlight in the script pane and hide error window
+   */
   protected def clearErrorHighlight() {
     scriptTextArea.removeAllLineHighlights()
     spErrorMessage.setVisible(false)

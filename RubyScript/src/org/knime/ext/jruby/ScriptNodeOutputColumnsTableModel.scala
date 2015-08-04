@@ -5,7 +5,13 @@ import java.util._
 //remove if not needed
 import scala.collection.JavaConversions._
 
-@SerialVersionUID(3748218863796706007L)
+/**
+ * This class realizes a model for the table 
+ *   which presents an output columns list    
+ * 
+ * @author rss
+ *
+ */
 class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
 
   private var data: ArrayList[ArrayList[Any]] = new ArrayList[ArrayList[Any]]()
