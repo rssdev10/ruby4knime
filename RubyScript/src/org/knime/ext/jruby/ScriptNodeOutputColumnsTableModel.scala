@@ -1,9 +1,8 @@
 package org.knime.ext.jruby
 
 import javax.swing.table._
-import java.util._
-//remove if not needed
-import scala.collection.JavaConversions._
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * This class realizes a model for the table 
@@ -14,40 +13,44 @@ import scala.collection.JavaConversions._
  */
 class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
 
-  private var data: ArrayList[ArrayList[Any]] = new ArrayList[ArrayList[Any]]()
+  private var data = ArrayBuffer[ArrayBuffer[Any]]()
 
-  private var columnNames: ArrayList[String] = new ArrayList[String]()
+  private var columnNames = ArrayBuffer[String]()
 
   private var m_readOnly: Boolean = false
 
-  override def getColumnName(col: Int): String = columnNames.get(col).toString
+  override def getColumnName(col: Int): String = columnNames(col)
 
   def getRowCount(): Int = data.size
 
   def getColumnCount(): Int = columnNames.size
 
+  /* (non-Javadoc)
+   * @see javax.swing.table.TableModel#getValueAt(int, int)
+   */
   def getValueAt(row: Int, col: Int): AnyRef = {
-    val rowList = data.get(row)
-    rowList.get(col).asInstanceOf[AnyRef]
+    data(row)(col).asInstanceOf[AnyRef]
   }
 
+  /* (non-Javadoc)
+   * @see javax.swing.table.AbstractTableModel#isCellEditable(int, int)
+   */
   override def isCellEditable(row: Int, col: Int): Boolean = !m_readOnly
 
   def setReadOnly(readOnly: Boolean) {
     m_readOnly = readOnly
   }
 
+  /* (non-Javadoc)
+   * @see javax.swing.table.AbstractTableModel#setValueAt(java.lang.Object, int, int)
+   */
   override def setValueAt(value: AnyRef, row: Int, col: Int) {
-    val rowList = data.get(row)
-    rowList.set(col, value)
+    data(row)(col) = value
     fireTableCellUpdated(row, col)
   }
 
   def addRow(dataTableColumnName: AnyRef, dataTableColumnType: AnyRef) {
-    val row = new ArrayList[Any]()
-    row.add(dataTableColumnName)
-    row.add(dataTableColumnType)
-    data.add(row)
+    data += ArrayBuffer[Any](dataTableColumnName, dataTableColumnType)
     val rowNum = data.size - 1
     fireTableRowsInserted(rowNum, rowNum)
   }
@@ -58,7 +61,7 @@ class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
   }
 
   def addColumn(columnName: String) {
-    columnNames.add(columnName)
+    columnNames += columnName
   }
 
   def getDataTableColumnNames(): Array[String] = getDataTableValues(0)
@@ -66,31 +69,28 @@ class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
   def getDataTableColumnTypes(): Array[String] = getDataTableValues(1)
 
   private def getDataTableValues(colIndex: Int): Array[String] = {
-//    val dataTableColumnValues = Array.ofDim[String](data.size)
-//    var rowNum = 0
-//    for (row <- data) {
-//      dataTableColumnValues(rowNum) = row.get(colIndex).asInstanceOf[String]
-//      rowNum += 1
-//    }
-//    dataTableColumnValues
-    
-     data.map(_.get(colIndex).asInstanceOf[String]).toArray
+    data.map(_(colIndex).asInstanceOf[String]).toArray
   }
 
   def clearRows() {
-    data = new ArrayList[ArrayList[Any]]()
+    data.clear()
+  }
+
+  private def swap[T](s:ArrayBuffer[T], i: Int, j: Int) {
+    val v = s(i);
+    s(i) = s(j);
+    s(j) = v
   }
 
   def moveRowsUp(rows: Array[Int]) {
     for (j <- 0 until rows.length if rows(j) != 0)
-      Collections.swap(data, rows(j), rows(j) - 1)
+      swap(data, rows(j), rows(j) - 1)
     fireTableDataChanged()
   }
 
   def moveRowsDown(rows: Array[Int]) {
-    for (j <- rows.length - 1 to 0) {
-      if (rows(j) != data.size - 1) Collections.swap(data, rows(j), rows(j) + 1)
-    }
+    for (j <- rows.length - 1 to 0 if rows(j) != data.size - 1)
+      swap(data, rows(j), rows(j) + 1)
     fireTableDataChanged()
   }
 
