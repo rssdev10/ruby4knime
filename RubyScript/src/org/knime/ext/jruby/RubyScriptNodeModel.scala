@@ -189,15 +189,6 @@ end
     case _ => templateScript
   })
 
-//  if (snippetMode) {
-//    buffer ++= templateSnippet
-//  } else {
-//    if (numInputs > 0) {
-//      buffer ++= templateScriptMultiInput
-//    } else {
-//      buffer ++= templateScript
-//    }
-//  }
   script = buffer.toString()
 
   if (snippetMode) {
@@ -214,10 +205,6 @@ end
     val outSpecs = configure(if (numInputs > 0) Array(inData(0).getDataTableSpec) else null)
     val outContainer = Array.tabulate(numOutputs) { i => new DataContainer(outSpecs(i)) }
 
-//    val outContainer = Array.ofDim[DataContainer](numOutputs)
-//    for (i <- 0 to numOutputs - 1) {
-//      outContainer(i) = new DataContainer(outSpecs(i))
-//    }
     val fileSep = System.getProperty("file.separator")
     val core = Platform.getBundle("org.knime.core")
     val coreClassPath = core.getHeaders.get("Bundle-Classpath").toString
@@ -236,32 +223,18 @@ end
       .map(s => FileLocator.find(core, new Path(s), null)).filter(_ != null)
       .map(FileLocator.resolve(_).getFile)
 
-//    val classpath = new ArrayList[String]()
-//    for (s <- coreClassPath.split(",")) {
-//      val u = FileLocator.find(core, new Path(s), null)
-//      if (u != null) {
-//        classpath.add(FileLocator.resolve(u).getFile)
-//      }
-//    }
     classpath.add(corePluginPath + fileSep + "bin")
     baseClassPath.split(",").view
       .map(s => FileLocator.find(base, new Path(s), null)).filter(_ != null)
       .foreach { u => classpath.add(FileLocator.resolve(u).getFile) }
 
-//    for (s <- baseClassPath.split(",")) {
-//      val u = FileLocator.find(base, new Path(s), null)
-//      if (u != null) {
-//        classpath.add(FileLocator.resolve(u).getFile)
-//      }
-//    }
     classpath.add(basePluginPath + fileSep + "bin")
     classpath.add(getJavaClasspathExtensionPath)
     if (RubyScriptNodePlugin.getDefault.getPreferenceStore.getBoolean(PreferenceConstants.JRUBY_USE_EXTERNAL_GEMS)) {
       val str = RubyScriptNodePlugin.getDefault.getPreferenceStore.getString(PreferenceConstants.JRUBY_PATH)
       System.setProperty("jruby.home", str)
     }
-    var container: ScriptingContainer = null
-    container = new ScriptingContainer(LocalContextScope.THREADSAFE)
+    var container = new ScriptingContainer(LocalContextScope.THREADSAFE)
     container.setCompatVersion(CompatVersion.RUBY2_0)
     container.setCompileMode(CompileMode.JIT)
     container.setLoadPaths(classpath)
@@ -310,11 +283,6 @@ end
       exec.createBufferedDataTable(outContainer(i).getTable, exec)
     }
 
-//    val result = Array.ofDim[BufferedDataTable](numOutputs)
-//    for (i <- 0 to numOutputs - 1) {
-//      outContainer(i).close()
-//      result(i) = exec.createBufferedDataTable(outContainer(i).getTable, exec)
-//    }
     result
   }
 
@@ -404,16 +372,6 @@ end
   private def findErrorSource(thr: Throwable, filename: String): Int = {
     val err = thr.getMessage
     if (err.startsWith("(SyntaxError)")) {
-//      val pLineS = Pattern.compile("(?<=:)(\\d+):(.*)")
-//      val mLine = pLineS.matcher(err)
-//      if (mLine.find()) {
-//        logger.debug("SyntaxError error line: " + mLine.group(1))
-//        script_error.text = if (mLine.group(2) == null) script_error.text else mLine.group(2)
-//        logger.debug("SyntaxError: " + script_error.text)
-//        script_error.lineNum = java.lang.Integer.parseInt(mLine.group(1))
-//        script_error.columnNum = -1
-//        script_error.`type` = "SyntaxError"
-//      }
       val pLineS = """(?<=:)(\d+):(.*)""".r
       err match {
         case pLineS(line, text) =>
@@ -427,11 +385,6 @@ end
       }
 
     } else {
-//      val `type` = Pattern.compile("(?<=\\()(\\w*)")
-//      val mLine = `type`.matcher(err)
-//      if (mLine.find()) {
-//        script_error.`type` = mLine.group(1)
-//      }
       script_error.errType = """(?<=\()(\w*)""".r
         .findFirstMatchIn(err).map(_ group 2).getOrElse(script_error.errType)
 
@@ -443,11 +396,6 @@ end
                 script_error.columnNum = -1
                 script_error.lineNum = line.getLineNumber
                 script_error.text = thr.getMessage
-                //        val knimeType = Pattern.compile("(?<=org.knime.)(.*)(?=:)")
-                //        val mKnimeType = knimeType.matcher(script_error.text)
-                //        script_error.`type` = 
-                //          if (mKnimeType.find()) mKnimeType.group(1) else "RuntimeError"
-        
                 script_error.errType = """(?<=org.knime.)(.*)(?=:)""".r
                   .findFirstMatchIn(err).map(_ group 1).getOrElse("RuntimeError")
                 //break
@@ -460,14 +408,6 @@ end
           (if (script_error.columnNum != -1) " at column " + script_error.columnNum)
     })
 
-//    if (script_error.lineNum != -1) {
-//      script_error.msg += " stopped with error in line " + script_error.lineNum
-//      if (script_error.columnNum != -1) {
-//        script_error.msg += " at column " + script_error.columnNum
-//      }
-//    } else {
-//      script_error.msg += "] stopped with error at line --unknown--"
-//    }
     if (script_error.errType == "RuntimeError") {
       logger.error(script_error.msg + "\n" + script_error.errType + " ( " + script_error.text + " )")
       val cause = thr.getCause
