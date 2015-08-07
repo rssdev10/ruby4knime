@@ -35,6 +35,7 @@ import org.knime.core.data.`def`.IntCell
 import org.knime.ext.jruby.preferences.PreferenceConstants
 import scala.collection.JavaConversions._
 import scala.util.matching.Regex
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * This is the model implementation of RubyScript.
@@ -219,23 +220,24 @@ end
     ext.append(corePluginPath + fileSep + "lib")
     ext.append(getJavaExtDirsExtensionPath)
 
-    val classpath = coreClassPath.split(",").view
+    val classpath = ArrayBuffer[String]()
+    classpath ++= coreClassPath.split(",").view
       .map(s => FileLocator.find(core, new Path(s), null)).filter(_ != null)
       .map(FileLocator.resolve(_).getFile)
 
-    classpath.add(corePluginPath + fileSep + "bin")
+    classpath += corePluginPath + fileSep + "bin"
     baseClassPath.split(",").view
       .map(s => FileLocator.find(base, new Path(s), null)).filter(_ != null)
       .foreach { u => classpath.add(FileLocator.resolve(u).getFile) }
 
-    classpath.add(basePluginPath + fileSep + "bin")
-    classpath.add(getJavaClasspathExtensionPath)
+    classpath += basePluginPath + fileSep + "bin"
+    classpath += getJavaClasspathExtensionPath
     if (RubyScriptNodePlugin.getDefault.getPreferenceStore.getBoolean(PreferenceConstants.JRUBY_USE_EXTERNAL_GEMS)) {
       val str = RubyScriptNodePlugin.getDefault.getPreferenceStore.getString(PreferenceConstants.JRUBY_PATH)
       System.setProperty("jruby.home", str)
     }
     var container = new ScriptingContainer(LocalContextScope.THREADSAFE)
-    container.setCompatVersion(CompatVersion.RUBY2_0)
+    //container.setCompatVersion(CompatVersion.RUBY2_0)
     container.setCompileMode(CompileMode.JIT)
     container.setLoadPaths(classpath)
     container.setOutput(new LoggerOutputStream(logger, NodeLogger.LEVEL.WARN))
