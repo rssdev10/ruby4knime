@@ -82,15 +82,27 @@ class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
     s(j) = v
   }
 
-  def moveRowsUp(rows: Array[Int]) {
-    for (j <- 0 until rows.length if rows(j) != 0)
-      swap(data, rows(j), rows(j) - 1)
-    fireTableDataChanged()
+  def moveRowsUp(rows: Array[Int]):(Int,Int) = {
+    val limit = 0
+    var range = Array(rows.head, rows.last)
+    if (rows.head > limit) {
+      rows.foreach(i => swap(data, i, i - 1))
+      fireTableDataChanged()
+
+      range = range.map(i => if (i - 1 < limit) limit else i - 1)
+    }
+    (range(0), range(1))
   }
 
-  def moveRowsDown(rows: Array[Int]) {
-    for (j <- rows.length - 1 to 0 if rows(j) != data.size - 1)
-      swap(data, rows(j), rows(j) + 1)
-    fireTableDataChanged()
+  def moveRowsDown(rows: Array[Int]): (Int, Int) = {
+    val limit = data.size - 1;
+    var range = Array(rows.head, rows.last)
+    if (rows.last < limit) {
+      rows.view.reverse.foreach(i => swap(data, i + 1, i))
+
+      fireTableDataChanged()
+      range = range.map(i => if (i + 1 > limit) limit else i + 1)
+    }
+    (range(0), range(1))
   }
 }

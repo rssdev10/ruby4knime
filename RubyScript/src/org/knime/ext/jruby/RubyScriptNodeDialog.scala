@@ -121,39 +121,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
         }
       }
     })
-    val upButton = new JButton("Up")
-    upButton.addActionListener(new ActionListener() {
 
-      def actionPerformed(e: ActionEvent) {
-        val selectedRows = table.getSelectedRows
-        logger.debug("selectedRows = " + selectedRows)
-        if (selectedRows.length > 0) {
-          table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel]
-            .moveRowsUp(selectedRows)
-        }
-      }
-    })
-    val downButton = new JButton("Down")
-    downButton.addActionListener(new ActionListener() {
-
-      def actionPerformed(e: ActionEvent) {
-        val selectedRows = table.getSelectedRows
-        logger.debug("selectedRows = " + selectedRows)
-        if (selectedRows.length > 0) {
-          table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel]
-            .moveRowsDown(selectedRows)
-        }
-      }
-    })
-
-    Array(addButton, removeButton, Box.createHorizontalStrut(40),
-      upButton, downButton).foreach(outputButtonPanel.add)
-
-//    outputButtonPanel.add(addButton)
-//    outputButtonPanel.add(removeButton)
-//    outputButtonPanel.add(Box.createHorizontalStrut(40))
-//    outputButtonPanel.add(upButton)
-//    outputButtonPanel.add(downButton)
     table = new JTable()
     table.putClientProperty("terminateEditOnFocusLost", true)
     table.setAutoscrolls(true)
@@ -163,6 +131,39 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     model.addRow("script output " + columnCounter, "String")
     columnCounter += 1
     table.setModel(model)
+
+    def createButtonForRowsMoving(title: String, func: (Array[Int]) => (Int, Int)): JButton = {
+      val result = new JButton(title)
+      result.addActionListener(new ActionListener() {
+
+        def actionPerformed(e: ActionEvent) {
+          val selectedRows = table.getSelectedRows
+          logger.debug("selectedRows = " + selectedRows)
+          if (selectedRows.length > 0) {
+            val position = func(selectedRows)
+            table.setRowSelectionInterval(position._1, position._2)
+          }
+        }
+      })
+      result
+    }
+
+    val upButton = createButtonForRowsMoving(
+        "Up",
+        table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].moveRowsUp)
+    val downButton = createButtonForRowsMoving(
+        "Down",
+        table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel].moveRowsDown)
+
+    Array(addButton, removeButton, Box.createHorizontalStrut(40),
+      upButton, downButton).foreach(outputButtonPanel.add)
+
+//    outputButtonPanel.add(addButton)
+//    outputButtonPanel.add(removeButton)
+//    outputButtonPanel.add(Box.createHorizontalStrut(40))
+//    outputButtonPanel.add(upButton)
+//    outputButtonPanel.add(downButton)
+
     outputMainPanel.add(table.getTableHeader, BorderLayout.PAGE_START)
     outputMainPanel.add(table, BorderLayout.CENTER)
     outputPanel.add(newtableCBPanel)
