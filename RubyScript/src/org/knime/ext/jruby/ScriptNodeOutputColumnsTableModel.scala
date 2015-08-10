@@ -88,7 +88,6 @@ class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
     if (rows.head > limit) {
       rows.foreach(i => swap(data, i, i - 1))
       fireTableDataChanged()
-
       range = range.map(i => if (i - 1 < limit) limit else i - 1)
     }
     (range(0), range(1))
@@ -99,7 +98,6 @@ class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
     var range = Array(rows.head, rows.last)
     if (rows.last < limit) {
       rows.view.reverse.foreach(i => swap(data, i + 1, i))
-
       fireTableDataChanged()
       range = range.map(i => if (i + 1 > limit) limit else i + 1)
     }
