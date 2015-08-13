@@ -388,7 +388,7 @@ end
 
     } else {
       script_error.errType = """(?<=\()(\w*)""".r
-        .findFirstMatchIn(err).map(_ group 2).getOrElse(script_error.errType)
+        .findFirstMatchIn(err).map(_ group 1).getOrElse(script_error.errType)
 
       val cause = thr.getCause
       cause.getStackTrace
