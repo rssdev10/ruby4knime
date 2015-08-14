@@ -374,34 +374,30 @@ end
   private def findErrorSource(thr: Throwable, filename: String): Int = {
     val err = thr.getMessage
     if (err.startsWith("(SyntaxError)")) {
-      val pLineS = """(?<=:)(\d+):(.*)""".r
-      err match {
-        case pLineS(line, text) =>
-	        logger.debug("SyntaxError error line: " + line)
-	        if (text != null) script_error.text = text 
-	        logger.debug("SyntaxError: " + script_error.text)
-	        script_error.lineNum = line.toInt
-	        script_error.columnNum = -1
-	        script_error.errType = "SyntaxError"
-        case _ =>
+      """(?<=:)(\d+):(.*)""".r.findFirstMatchIn(err).foreach { m =>
+            val line = m.group(1)
+            val text = m.group(2)
+            logger.debug("SyntaxError error line: " + line)
+            if (text != null) script_error.text = text
+            logger.debug("SyntaxError: " + script_error.text)
+            script_error.lineNum = line.toInt
+            script_error.columnNum = -1
+            script_error.errType = "SyntaxError"
       }
-
     } else {
       script_error.errType = """(?<=\()(\w*)""".r
         .findFirstMatchIn(err).map(_ group 1).getOrElse(script_error.errType)
 
       val cause = thr.getCause
-      cause.getStackTrace
-          .filter(line => line.getFileName == filename)
-          .map(line => {
+      cause.getStackTrace.find(line => line.getFileName == filename)
+        .foreach { line =>
                 script_error.text = cause.getMessage
                 script_error.columnNum = -1
                 script_error.lineNum = line.getLineNumber
                 script_error.text = thr.getMessage
                 script_error.errType = """(?<=org.knime.)(.*)(?=:)""".r
                   .findFirstMatchIn(err).map(_ group 1).getOrElse("RuntimeError")
-                //break
-              }).head
+          }
     }
     script_error.msg = "script" + (script_error.lineNum match {
       case -1 => "] stopped with error at line --unknown--"
