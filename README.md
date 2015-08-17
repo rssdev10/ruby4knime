@@ -1,6 +1,8 @@
 ruby4knime
 ==========
 
+[![Join the chat at https://gitter.im/rssdev10/ruby4knime](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/rssdev10/ruby4knime?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ## Intro
 Ruby scripting extension for [KNIME](http://knime.org)
 
