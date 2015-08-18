@@ -2,7 +2,7 @@
 <feature
       id="ruby4knime.feature"
       label="Ruby Scripting Extension"
-      version="0.0.6.qualifier"
+      version="0.0.7.qualifier"
       license-feature="org.eclipse.platform"
       license-feature-version="3.7.2.v20120207-1839-9gF7UHPDFxGjd-PqDr2jX_4yKaumkoHTz04_q-q">
 

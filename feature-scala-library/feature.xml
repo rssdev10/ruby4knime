@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="scala_library"
+      label="Scala_library"
+      version="2.10.1.qualifier">
+
+   <description url="http://download.scala-ide.org/sdk/e37/scala210/stable/site/features/">
+      Minimal scala libraries
+   </description>
+
+   <license url="http://www.example.com/license">
+      [Enter License Description here.]
+   </license>
+
+   <plugin
+         id="org.scala-ide.scala.library"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/ruby4knime.feature_0.0.7.201508181411.jar" id="ruby4knime.feature" version="0.0.7.201508181411">
+      <category name="ruby4knime"/>
+   </feature>
+   <feature url="features/scala_library_2.10.1.201508181411.jar" id="scala_library" version="2.10.1.201508181411">
+      <category name="scala"/>
+   </feature>
+   <category-def name="ruby4knime" label="Ruby4KNIME plugin"/>
+   <category-def name="scala" label="Scala runtime library"/>
+</site>
