@@ -86,8 +86,8 @@ class RubyScriptNodeModel (
 
   protected var appendCols: Boolean = true
 
-  protected var columnNames: Array[String] = _
-  protected var columnTypes: Array[String] = _
+  protected var columnNames = Array[String]()
+  protected var columnTypes = Array[String]()
 
   class ScriptError {
     var lineNum: Int = -1
@@ -107,7 +107,8 @@ class RubyScriptNodeModel (
 #  Flow variables:
 #     puts FlowVariableList['knime.workspace'] # reading
 #     FlowVariableList['filename'] = '1.txt'   # writing
-#"""
+#
+"""
 
   protected val templateSnippet =
 """#
@@ -351,8 +352,8 @@ end
   protected def loadValidatedSettingsFrom(settings: NodeSettingsRO) {
     script = settings.getString(SCRIPT)
     appendCols = settings.getBoolean(APPEND_COLS, true)
-    columnNames = settings.getStringArray(COLUMN_NAMES)
-    columnTypes = settings.getStringArray(COLUMN_TYPES)
+    columnNames = Option(settings.getStringArray(COLUMN_NAMES)).getOrElse(Array())
+    columnTypes = Option(settings.getStringArray(COLUMN_TYPES)).getOrElse(Array())
     script_error = new ScriptError()
   }
 
