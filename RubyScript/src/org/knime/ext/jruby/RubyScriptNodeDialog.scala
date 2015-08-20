@@ -39,6 +39,7 @@ import RubyScriptNodeDialog._
 //remove if not needed
 import scala.collection.JavaConversions._
 import scala.collection.convert.WrapAsScala.enumerationAsScalaIterator
+import scala.swing._
 
 /**
  * <code>NodeDialog</code> for the "JRuby Script" Node.
@@ -63,9 +64,9 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
 
   private var scriptTextArea: RSyntaxTextArea = _
 
-  private var errorMessage: JTextArea = _
+  private var errorMessage: TextArea = _
 
-  private var spErrorMessage: JScrollPane = _
+  private var spErrorMessage: ScrollPane = _
 
   private var table: JTable = _
 
@@ -183,8 +184,8 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
    * Ruby script etc.
    */
   private def createScriptTab() {
-    errorMessage = new JTextArea()
-    spErrorMessage = new JScrollPane(errorMessage)
+    errorMessage = new TextArea()
+    spErrorMessage = new ScrollPane(errorMessage)
     scriptTextArea = new RSyntaxTextArea()
     scriptTextArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_RUBY)
     scriptTextArea.setCodeFoldingEnabled(true)
@@ -192,9 +193,9 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     val spScript = new RTextScrollPane(scriptTextArea)
     spScript.setFoldIndicatorEnabled(true)
     val font = new Font(Font.MONOSPACED, Font.PLAIN, 12)
-    errorMessage.setFont(font)
-    errorMessage.setForeground(Color.RED)
-    errorMessage.setEditable(false)
+    errorMessage.font = font
+    errorMessage.foreground = Color.RED
+    errorMessage.editable  = false
     scriptPanel = new JPanel(new BorderLayout())
     val scriptButtonPanel = new JPanel()
     val scriptButton = new JButton("Load Script from File")
@@ -216,29 +217,31 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     scriptButtonPanel.add(scriptButton)
     val scriptMainPanel = new JPanel(new BorderLayout())
     scriptMainPanel.add(new JLabel("Script: "), BorderLayout.NORTH)
-    var splitPane =
-      new JSplitPane(JSplitPane.VERTICAL_SPLIT, spScript, spErrorMessage)
-    scriptMainPanel.add(splitPane, BorderLayout.CENTER)
+    var splitPane = new SplitPane(Orientation.Horizontal,
+        swing.Component.wrap(spScript), spErrorMessage)
+    scriptMainPanel.add(splitPane.peer, BorderLayout.CENTER)
     val num = factory.getModel.getInputPortRoles.length
     columnTables = Array.ofDim[JTable](num)
-    val inputColumnsPanel = new JPanel()
-    inputColumnsPanel.setLayout(
-      new BoxLayout(inputColumnsPanel, BoxLayout.PAGE_AXIS))
-    if (num > 0) inputColumnsPanel.setMinimumSize(new Dimension(20, 150))
+    val inputColumnsPanel = new BorderPanel()
+    inputColumnsPanel.peer.setLayout(
+      new BoxLayout(inputColumnsPanel.peer, BoxLayout.PAGE_AXIS))
+    if (num > 0) inputColumnsPanel.minimumSize = new Dimension(20, 150)
     for (i <- 0 until num) {
-      inputColumnsPanel.add(addColumnPane("Input[%d] columns: ".format(i), i))
+      inputColumnsPanel.peer.add(addColumnPane("Input[%d] columns: ".format(i), i).peer)
     }
     val flowVariablesPanel = addFlowVariablesPane("Flow variables: ")
-    splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
+    splitPane = new SplitPane(Orientation.Horizontal,
       inputColumnsPanel, flowVariablesPanel)
-    splitPane.setDividerLocation(splitPane.getSize().height -
-      splitPane.getInsets().bottom - splitPane.getDividerSize - 50)
+    splitPane.dividerLocation  = splitPane.size.height
+                               - splitPane.peer.getInsets().bottom
+                               - splitPane.dividerSize - 50
+
     scriptPanel.add(scriptButtonPanel, BorderLayout.PAGE_START)
     scriptPanel.add(scriptMainPanel, BorderLayout.CENTER)
-    val config_and_sript = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-      splitPane, scriptPanel)
-    config_and_sript.setDividerLocation(200)
-    addTab("Script", config_and_sript, false)
+    val config_and_sript = new SplitPane(Orientation.Vertical, splitPane,
+        swing.Component.wrap(scriptPanel))
+    config_and_sript.dividerLocation = 200
+    addTab("Script", config_and_sript.peer, false)
   }
 
   /**
@@ -247,8 +250,8 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
    * @param list of columns
    * @return JPanel
    */
-  private def addColumnPane(label: String, index: Int): JPanel = {
-    val panel = new JPanel(new BorderLayout())
+  private def addColumnPane(label: String, index: Int): Panel = {
+    val panel = new BorderPanel()
     val table = new JTable()
     table.putClientProperty("terminateEditOnFocusLost", true)
     table.setAutoscrolls(true)
@@ -288,8 +291,8 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     }.init(index))
     val scrollPane = new JScrollPane(table)
     table.setFillsViewportHeight(true)
-    panel.add(new JLabel(label), BorderLayout.NORTH)
-    panel.add(scrollPane, BorderLayout.CENTER)
+    panel.peer.add(new JLabel(label), BorderLayout.NORTH)
+    panel.peer.add(scrollPane, BorderLayout.CENTER)
     columnTables(index) = table
     panel
   }
@@ -311,8 +314,8 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
    * @param label
    * @return JPanel
    */
-  private def addFlowVariablesPane(label: String): JPanel = {
-    val flowVariablesPanel = new JPanel(new BorderLayout())
+  private def addFlowVariablesPane(label: String): Panel = {
+    val flowVariablesPanel = new BorderPanel()
     val table = new JTable()
     table.putClientProperty("terminateEditOnFocusLost", true)
     table.setAutoscrolls(true)
@@ -342,8 +345,8 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     )
     val scrollPane = new JScrollPane(table)
     table.setFillsViewportHeight(true)
-    flowVariablesPanel.add(new JLabel(label), BorderLayout.NORTH)
-    flowVariablesPanel.add(scrollPane, BorderLayout.CENTER)
+    flowVariablesPanel.peer.add(new JLabel(label), BorderLayout.NORTH)
+    flowVariablesPanel.peer.add(scrollPane, BorderLayout.CENTER)
     flowVariablesPanel
   }
 
@@ -367,8 +370,8 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
       outstr ++= error.text
       outstr ++= "\nline:\t class ( method )\t file\n"
       outstr ++= error.trace
-      errorMessage.setText(outstr.toString)
-      spErrorMessage.setVisible(true)
+      errorMessage.text = outstr.toString
+      spErrorMessage.visible = true
       setSelected("Script")
     }
     val appendCols = settings.getBoolean(RubyScriptNodeModel.APPEND_COLS, true)
@@ -417,8 +420,8 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
    */
   protected def clearErrorHighlight() {
     scriptTextArea.removeAllLineHighlights()
-    spErrorMessage.setVisible(false)
-    errorMessage.setText("")
+    spErrorMessage.visible = false
+    errorMessage.text = ""
     scriptPanel.revalidate()
     scriptPanel.repaint()
   }
