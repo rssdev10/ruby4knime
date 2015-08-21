@@ -60,7 +60,7 @@ object RubyScriptNodeDialog {
 class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
   extends NodeDialogPane() {
 
-  private var scriptPanel: JPanel = _
+  private var scriptPanel: BorderPanel = _
 
   private var scriptTextArea: RSyntaxTextArea = _
 
@@ -72,7 +72,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
 
   private var columnCounter: Int = 1
 
-  private var doAppendInputColumns: JCheckBox = _
+  private var doAppendInputColumns: CheckBox = _
 
   private var columnTables: Array[JTable] = _
 
@@ -99,8 +99,8 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     val outputButtonPanel = new JPanel()
     val outputMainPanel = new JPanel(new BorderLayout())
     val newtableCBPanel = new JPanel()
-    doAppendInputColumns = new JCheckBox("Append columns to input table spec")
-    newtableCBPanel.add(doAppendInputColumns, BorderLayout.WEST)
+    doAppendInputColumns = new CheckBox("Append columns to input table spec")
+    newtableCBPanel.add(doAppendInputColumns.peer, BorderLayout.WEST)
     val addButton = new JButton("Add Output Column")
     addButton.addActionListener((_: ActionEvent) => {
         var name: String = null
@@ -196,8 +196,8 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     errorMessage.font = font
     errorMessage.foreground = Color.RED
     errorMessage.editable  = false
-    scriptPanel = new JPanel(new BorderLayout())
-    val scriptButtonPanel = new JPanel()
+    scriptPanel = new BorderPanel()
+    val scriptButtonPanel = new BorderPanel()
     val scriptButton = new JButton("Load Script from File")
     scriptButton.addActionListener((e: ActionEvent) => {
         val returnVal = fileChooser.showOpenDialog(
@@ -214,12 +214,12 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
         scriptTextArea.setText(file_content)
         clearErrorHighlight()
     })
-    scriptButtonPanel.add(scriptButton)
-    val scriptMainPanel = new JPanel(new BorderLayout())
-    scriptMainPanel.add(new JLabel("Script: "), BorderLayout.NORTH)
+    scriptButtonPanel.peer.add(scriptButton)
+    val scriptMainPanel = new BorderPanel()
+    scriptMainPanel.peer.add(new Label("Script: ").peer, BorderLayout.NORTH)
     var splitPane = new SplitPane(Orientation.Horizontal,
         swing.Component.wrap(spScript), spErrorMessage)
-    scriptMainPanel.add(splitPane.peer, BorderLayout.CENTER)
+    scriptMainPanel.peer.add(splitPane.peer, BorderLayout.CENTER)
     val num = factory.getModel.getInputPortRoles.length
     columnTables = Array.ofDim[JTable](num)
     val inputColumnsPanel = new BorderPanel()
@@ -236,10 +236,9 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
                                - splitPane.peer.getInsets().bottom
                                - splitPane.dividerSize - 50
 
-    scriptPanel.add(scriptButtonPanel, BorderLayout.PAGE_START)
-    scriptPanel.add(scriptMainPanel, BorderLayout.CENTER)
-    val config_and_sript = new SplitPane(Orientation.Vertical, splitPane,
-        swing.Component.wrap(scriptPanel))
+    scriptPanel.peer.add(scriptButtonPanel.peer, BorderLayout.PAGE_START)
+    scriptPanel.peer.add(scriptMainPanel.peer, BorderLayout.CENTER)
+    val config_and_sript = new SplitPane(Orientation.Vertical, splitPane, scriptPanel)
     config_and_sript.dividerLocation = 200
     addTab("Script", config_and_sript.peer, false)
   }
@@ -375,7 +374,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
       setSelected("Script")
     }
     val appendCols = settings.getBoolean(RubyScriptNodeModel.APPEND_COLS, true)
-    doAppendInputColumns.setSelected(appendCols)
+    doAppendInputColumns.selected = appendCols
     val dataTableColumnNames =
       settings.getStringArray(RubyScriptNodeModel.COLUMN_NAMES,
         Array[String]():_*)
@@ -407,8 +406,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
       throw new InvalidSettingsException("Please specify a script to be run.")
     }
     settings.addString(RubyScriptNodeModel.SCRIPT, scriptTextArea.getText)
-    settings.addBoolean(RubyScriptNodeModel.APPEND_COLS,
-      doAppendInputColumns.isSelected)
+    settings.addBoolean(RubyScriptNodeModel.APPEND_COLS, doAppendInputColumns.selected)
     val columnNames = table.getDataTableColumnNames
     settings.addStringArray(RubyScriptNodeModel.COLUMN_NAMES, columnNames: _*)
     val columnTypes = table.getDataTableColumnTypes
