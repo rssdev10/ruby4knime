@@ -2,44 +2,38 @@ package org.knime.ext.jruby
 
 import java.awt.BorderLayout
 import java.awt.Color
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.Point
 import java.awt.event._
-import java.io.BufferedReader
-import java.io.File
-import java.io.FileReader
-import java.io.IOException
-import java.util.Iterator
-import java.util.Map
+
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.DefaultCellEditor
-import javax.swing.JButton
-import javax.swing.JCheckBox
-import javax.swing.JComboBox
 import javax.swing.JFileChooser
-import javax.swing.JLabel
+import javax.swing.JComboBox
 import javax.swing.JPanel
-import javax.swing.JSplitPane
 import javax.swing.JTable
 import javax.swing.table.TableColumn
 import javax.swing.table.TableCellEditor
 import javax.swing.text.BadLocationException
+
 import org.knime.core.data.DataColumnSpec
 import org.knime.core.data.DataTableSpec
 import org.knime.core.node._
 import org.knime.core.node.workflow.FlowVariable
+
 import javax.swing.JScrollPane
-import javax.swing.JTextArea
 import java.awt.Font
+
 import org.fife.ui.rtextarea._
 import org.fife.ui.rsyntaxtextarea._
+
 import RubyScriptNodeDialog._
 //remove if not needed
+
 import scala.collection.JavaConversions._
 import scala.collection.convert.WrapAsScala.enumerationAsScalaIterator
+
 import scala.swing._
+import scala.swing.event._
 
 /**
  * <code>NodeDialog</code> for the "JRuby Script" Node.
@@ -82,10 +76,6 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
 
   createScriptTab()
 
-  implicit private def toActionListener(f: (ActionEvent) => Unit) = new ActionListener {
-    def actionPerformed(e: ActionEvent) { f(e) }
-  }
-
   implicit private def toTableModel(table: JTable):ScriptNodeOutputColumnsTableModel = {
     table.getModel.asInstanceOf[ScriptNodeOutputColumnsTableModel]
   }
@@ -101,29 +91,32 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     val newtableCBPanel = new JPanel()
     doAppendInputColumns = new CheckBox("Append columns to input table spec")
     newtableCBPanel.add(doAppendInputColumns.peer, BorderLayout.WEST)
-    val addButton = new JButton("Add Output Column")
-    addButton.addActionListener((_: ActionEvent) => {
-        var name: String = null
-        val model:ScriptNodeOutputColumnsTableModel = table
-        val columns = model.getDataTableColumnNames
-        do {
-          name = "script output " + columnCounter
-          columnCounter += 1
-        } while (columns.indexWhere(_ == name) >= 0);
-        model.addRow(name, "String")
-    })
-    val removeButton = new JButton("Remove Output Column")
-    removeButton.addActionListener((_: ActionEvent) => {
-        val selectedRows = table.getSelectedRows
-        logger.debug("selectedRows = " + selectedRows)
-        if (selectedRows.length == 0) {
-          return
-        }
-        for (i <- selectedRows.length - 1 to 0) {
-          logger.debug("   removal " + i + ": removing row " + selectedRows(i))
-          table.removeRow(selectedRows(i))
-        }
-    })
+    val addButton = new Button("Add Output Column") {
+      reactions += {
+        case ButtonClicked(b) =>
+          var name: String = null
+          val model: ScriptNodeOutputColumnsTableModel = table
+          val columns = model.getDataTableColumnNames
+          do {
+            name = "script output " + columnCounter
+            columnCounter += 1
+          } while (columns.indexWhere(_ == name) >= 0);
+          model.addRow(name, "String")
+      }
+    }
+    val removeButton = new Button("Remove Output Column") {
+      reactions += {
+        case ButtonClicked(b) =>
+          val selectedRows = table.getSelectedRows
+          logger.debug("selectedRows = " + selectedRows)
+          if (selectedRows.length > 0) {
+            for (i <- selectedRows.length - 1 to 0) {
+              logger.debug("   removal " + i + ": removing row " + selectedRows(i))
+              table.removeRow(selectedRows(i))
+            }
+          }
+      }
+    }
 
     table = new JTable()
     table.putClientProperty("terminateEditOnFocusLost", true)
@@ -135,17 +128,18 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     columnCounter += 1
     table.setModel(model)
 
-    def createButtonForRowsMoving(title: String, func: (Array[Int]) => (Int, Int)): JButton = {
-      val result = new JButton(title)
-      result.addActionListener((_: ActionEvent) => {
-          val selectedRows = table.getSelectedRows
-          logger.debug("selectedRows = " + selectedRows)
-          if (selectedRows.length > 0) {
-            val position = func(selectedRows)
-            table.setRowSelectionInterval(position._1, position._2)
-          }
-      })
-      result
+    def createButtonForRowsMoving(title: String, func: (Array[Int]) => (Int, Int)): Button = {
+      new Button(title) {
+        reactions += {
+          case ButtonClicked(b) =>
+            val selectedRows = table.getSelectedRows
+            logger.debug("selectedRows = " + selectedRows)
+            if (selectedRows.length > 0) {
+              val position = func(selectedRows)
+              table.setRowSelectionInterval(position._1, position._2)
+            }
+        }
+      }
     }
 
     val upButton = createButtonForRowsMoving(
@@ -155,14 +149,11 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
         "Down",
         table.moveRowsDown)
 
-    Array(addButton, removeButton, Box.createHorizontalStrut(40),
-      upButton, downButton).foreach(outputButtonPanel.add)
-
-//    outputButtonPanel.add(addButton)
-//    outputButtonPanel.add(removeButton)
-//    outputButtonPanel.add(Box.createHorizontalStrut(40))
-//    outputButtonPanel.add(upButton)
-//    outputButtonPanel.add(downButton)
+    outputButtonPanel.add(addButton.peer)
+    outputButtonPanel.add(removeButton.peer)
+    outputButtonPanel.add(Box.createHorizontalStrut(40))
+    outputButtonPanel.add(upButton.peer)
+    outputButtonPanel.add(downButton.peer)
 
     outputMainPanel.add(table.getTableHeader, BorderLayout.PAGE_START)
     outputMainPanel.add(table, BorderLayout.CENTER)
@@ -170,12 +161,11 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     outputPanel.add(outputButtonPanel)
     outputPanel.add(outputMainPanel)
     val typeColumn = table.getColumnModel.getColumn(1)
-    val typeSelector = new JComboBox[String]()
-    typeSelector.addItem("String")
-    typeSelector.addItem("Integer")
-    typeSelector.addItem("Double")
-    typeSelector.setEditable(true)
-    typeColumn.setCellEditor(new DefaultCellEditor(typeSelector))
+    val typeSelector: ComboBox[String] =
+      new ComboBox[String](Seq("String", "Integer","Double"))
+    typeSelector.makeEditable
+    typeColumn.setCellEditor(new DefaultCellEditor(
+        typeSelector.peer.asInstanceOf[JComboBox[String]]))
     addTab("Script Output", outputPanel)
   }
 
@@ -198,25 +188,24 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     errorMessage.editable  = false
     scriptPanel = new BorderPanel()
     val scriptButtonPanel = new BorderPanel()
-    val scriptButton = new JButton("Load Script from File")
-    scriptButton.addActionListener((e: ActionEvent) => {
-        val returnVal = fileChooser.showOpenDialog(
-          e.getSource.asInstanceOf[Component])
-        if (returnVal != JFileChooser.APPROVE_OPTION) {
-          return
-        }
-        val file = fileChooser.getSelectedFile
-        if (!file.exists()) {
-          return
-        }
+    val scriptButton = new Button("Load Script from File") {
+      reactions += {
+        case ButtonClicked(b) =>
+          val returnVal = fileChooser.showOpenDialog(b.peer)
+          if (returnVal == JFileChooser.APPROVE_OPTION) {
+            val file = fileChooser.getSelectedFile
+            if (file.exists()) {
+              val file_content = scala.io.Source.fromFile(file, "utf-8").mkString
+              scriptTextArea.setText(file_content)
+              clearErrorHighlight()
+            }
+          }
+      }
+    }
+    scriptButtonPanel.peer.add(scriptButton.peer, BorderLayout.EAST)
+    scriptButtonPanel.peer.add(new Label("Ruby Script").peer, BorderLayout.CENTER)
 
-        val file_content = scala.io.Source.fromFile(file, "utf-8").mkString
-        scriptTextArea.setText(file_content)
-        clearErrorHighlight()
-    })
-    scriptButtonPanel.peer.add(scriptButton)
     val scriptMainPanel = new BorderPanel()
-    scriptMainPanel.peer.add(new Label("Script: ").peer, BorderLayout.NORTH)
     var splitPane = new SplitPane(Orientation.Horizontal,
         swing.Component.wrap(spScript), spErrorMessage)
     scriptMainPanel.peer.add(splitPane.peer, BorderLayout.CENTER)
@@ -263,7 +252,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     table.addMouseListener(new MouseAdapter(){
       private var m_index: Int = _
 
-      override def mouseClicked(event: MouseEvent) {
+      override def mouseClicked(event: java.awt.event.MouseEvent) {
         if (event.getClickCount == 2) {
           val table = event.getSource.asInstanceOf[JTable]
           val p = event.getPoint
@@ -290,7 +279,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     }.init(index))
     val scrollPane = new JScrollPane(table)
     table.setFillsViewportHeight(true)
-    panel.peer.add(new JLabel(label), BorderLayout.NORTH)
+    panel.peer.add(new Label(label).peer, BorderLayout.NORTH)
     panel.peer.add(scrollPane, BorderLayout.CENTER)
     columnTables(index) = table
     panel
@@ -325,7 +314,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     table.setModel(model)
     table.addMouseListener(new MouseAdapter() {
 
-      override def mouseClicked(event: MouseEvent) {
+      override def mouseClicked(event: java.awt.event.MouseEvent) {
         if (event.getClickCount == 2) {
           val table = event.getSource.asInstanceOf[JTable]
           val p = event.getPoint
@@ -344,7 +333,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     )
     val scrollPane = new JScrollPane(table)
     table.setFillsViewportHeight(true)
-    flowVariablesPanel.peer.add(new JLabel(label), BorderLayout.NORTH)
+    flowVariablesPanel.peer.add(new Label(label).peer, BorderLayout.NORTH)
     flowVariablesPanel.peer.add(scrollPane, BorderLayout.CENTER)
     flowVariablesPanel
   }
