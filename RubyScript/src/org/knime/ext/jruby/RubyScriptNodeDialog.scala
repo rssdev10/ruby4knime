@@ -32,6 +32,7 @@ import scala.collection.convert.WrapAsScala.enumerationAsScalaIterator
 import scala.swing._
 import scala.swing.event._
 import scala.swing.Table
+import scala.swing.Container
 
 /**
  * <code>NodeDialog</code> for the "JRuby Script" Node.
@@ -81,84 +82,63 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
    * Create column selection tab panel
    */
   private def createColumnSelectionTab() {
-    val outputPanel = new BoxPanel(Orientation.Vertical)
-    val outputButtonPanel = new BoxPanel(Orientation.Horizontal)
-    val outputMainPanel = new BorderPanel()
-    val newtableCBPanel = new BorderPanel()
-    doAppendInputColumns = new CheckBox("Append columns to input table spec")
-    newtableCBPanel.peer.add(doAppendInputColumns.peer, BorderLayout.WEST)
-    val addButton = new Button("Add Output Column") {
-      reactions += {
-        case ButtonClicked(b) =>
-          var name: String = null
-          val model: ScriptNodeOutputColumnsTableModel = table
-          val columns = model.getDataTableColumnNames
-          do {
-            name = "script output " + columnCounter
-            columnCounter += 1
-          } while (columns.indexWhere(_ == name) >= 0);
-          model.addRow(name, "String")
+    table = new Table() {
+      model = new ScriptNodeOutputColumnsTableModel() {
+        addColumn("Column name")
+        addColumn("Column type")
+        addRow("script output " + columnCounter, "String")
       }
-    }
-    val removeButton = new Button("Remove Output Column") {
-      reactions += {
-        case ButtonClicked(b) =>
-          val selectedRows = table.selection.rows
-          logger.debug("selectedRows = " + selectedRows)
-          selectedRows.view.toSeq.reverse.foreach(el => {
-              logger.debug("   removing row " + el)
-              table.removeRow(el)
-          })              
-      }
+      columnCounter += 1
     }
 
-    table = new Table()
-    val model = new ScriptNodeOutputColumnsTableModel()
-    model.addColumn("Column name")
-    model.addColumn("Column type")
-    model.addRow("script output " + columnCounter, "String")
-    columnCounter += 1
-    table.model = model
+    val outputPanel = new BoxPanel(Orientation.Vertical) {
+      contents += new BorderPanel() {
+        doAppendInputColumns = new CheckBox("Append columns to input table spec")
+        layout(doAppendInputColumns) = BorderPanel.Position.West
+        maximumSize = minimumSize
+      }
 
-    def createButtonForRowsMoving(title: String, func: (Seq[Int]) => Seq[Int]): Button = {
-      new Button(title) {
-        reactions += {
-          case ButtonClicked(b) =>
-            val selectedRows = table.selection.rows
-            logger.debug("selectedRows = " + selectedRows)
-            if (selectedRows.size > 0) {
-              table.selection.rows ++= func(selectedRows.toSeq)
-            }
+      contents += new BoxPanel(Orientation.Horizontal) {
+        contents += new Button("Add Output Column") {
+          reactions += {
+            case ButtonClicked(b) =>
+              var name: String = null
+              val model: ScriptNodeOutputColumnsTableModel = table
+              val columns = model.getDataTableColumnNames
+              do {
+                name = "script output " + columnCounter
+                columnCounter += 1
+              } while (columns.indexWhere(_ == name) >= 0);
+              model.addRow(name, "String")
+          }
         }
+        contents += new Button("Remove Output Column") {
+          reactions += {
+            case ButtonClicked(b) =>
+              val selectedRows = table.selection.rows
+              logger.debug("selectedRows = " + selectedRows)
+              selectedRows.view.toSeq.reverse.foreach(el => {
+                logger.debug("   removing row " + el)
+                table.removeRow(el)
+              })
+          }
+        }
+        contents += Swing.HStrut(40)
+        contents += createButtonForRowsMoving("Up", table.moveRowsUp)
+        contents += createButtonForRowsMoving("Down", table.moveRowsDown)
+        maximumSize = minimumSize
+      }
+
+      contents += new BorderPanel() {
+        peer.add(table.peer.getTableHeader, BorderLayout.PAGE_START)
+        layout(table) = BorderPanel.Position.Center
       }
     }
-
-    val upButton = createButtonForRowsMoving(
-        "Up",
-        table.moveRowsUp)
-    val downButton = createButtonForRowsMoving(
-        "Down",
-        table.moveRowsDown)
-
-    outputButtonPanel.peer.add(addButton.peer)
-    outputButtonPanel.peer.add(removeButton.peer)
-    outputButtonPanel.peer.add(Box.createHorizontalStrut(40))
-    outputButtonPanel.peer.add(upButton.peer)
-    outputButtonPanel.peer.add(downButton.peer)
-
-    outputMainPanel.peer.add(table.peer.getTableHeader, BorderLayout.PAGE_START)
-    outputMainPanel.peer.add(table.peer, BorderLayout.CENTER)
-
-    newtableCBPanel.maximumSize = newtableCBPanel.minimumSize
-    outputButtonPanel.maximumSize = outputButtonPanel.minimumSize
-
-    outputPanel.peer.add(newtableCBPanel.peer)
-    outputPanel.peer.add(outputButtonPanel.peer)
-    outputPanel.peer.add(outputMainPanel.peer)
     val typeColumn = table.peer.getColumnModel.getColumn(1)
     val typeSelector: ComboBox[String] =
-      new ComboBox[String](Seq("String", "Integer","Double"))
-    typeSelector.makeEditable
+      new ComboBox[String](Seq("String", "Integer","Double")) { 
+       makeEditable
+    }
     typeColumn.setCellEditor(new DefaultCellEditor(
         typeSelector.peer.asInstanceOf[JComboBox[String]]))
     addTab("Script Output", outputPanel.peer)
@@ -169,61 +149,72 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
    * Ruby script etc.
    */
   private def createScriptTab() {
-    errorMessage = new TextArea()
-    spErrorMessage = new ScrollPane(errorMessage)
-    scriptTextArea = new RSyntaxTextArea()
-    scriptTextArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_RUBY)
-    scriptTextArea.setCodeFoldingEnabled(true)
-    scriptTextArea.setAntiAliasingEnabled(true)
-    val spScript = new RTextScrollPane(scriptTextArea)
-    spScript.setFoldIndicatorEnabled(true)
-    val font = new Font(Font.MONOSPACED, Font.PLAIN, 12)
-    errorMessage.font = font
-    errorMessage.foreground = Color.RED
-    errorMessage.editable  = false
-    scriptPanel = new BorderPanel()
-    val scriptButtonPanel = new BorderPanel()
-    val scriptButton = new Button("Load Script from File") {
-      reactions += {
-        case ButtonClicked(b) =>
-          val returnVal = fileChooser.showOpenDialog(b.peer)
-          if (returnVal == JFileChooser.APPROVE_OPTION) {
-            val file = fileChooser.getSelectedFile
-            if (file.exists()) {
-              val file_content = scala.io.Source.fromFile(file, "utf-8").mkString
-              scriptTextArea.setText(file_content)
-              clearErrorHighlight()
-            }
-          }
-      }
+    errorMessage = new TextArea() {
+      font = new Font(Font.MONOSPACED, Font.PLAIN, 12)
+      foreground = Color.RED
+      editable = false
     }
-    scriptButtonPanel.peer.add(scriptButton.peer, BorderLayout.EAST)
-    scriptButtonPanel.peer.add(new Label("Ruby Script").peer, BorderLayout.CENTER)
+    spErrorMessage = new ScrollPane(errorMessage)
+    scriptTextArea = new RSyntaxTextArea() {
+      setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_RUBY)
+      setCodeFoldingEnabled(true)
+      setAntiAliasingEnabled(true)
+    }
 
-    val scriptMainPanel = new BorderPanel()
-    var splitPane = new SplitPane(Orientation.Horizontal,
-        swing.Component.wrap(spScript), spErrorMessage)
-    scriptMainPanel.peer.add(splitPane.peer, BorderLayout.CENTER)
+    val spScript = new RTextScrollPane(scriptTextArea) {
+      setFoldIndicatorEnabled(true)
+    }
+
+    scriptPanel = new BorderPanel() {
+      val scriptButtonPanel = new BorderPanel() {
+        layout(new Button("Load Script from File") {
+          reactions += {
+            case ButtonClicked(b) =>
+              val returnVal = fileChooser.showOpenDialog(b.peer)
+              if (returnVal == JFileChooser.APPROVE_OPTION) {
+                val file = fileChooser.getSelectedFile
+                if (file.exists()) {
+                  val file_content = scala.io.Source.fromFile(file, "utf-8").mkString
+                  scriptTextArea.setText(file_content)
+                  clearErrorHighlight()
+                }
+              }
+          }
+        }) = BorderPanel.Position.East
+
+        layout(new Label("Ruby Script")) = BorderPanel.Position.Center
+      }
+      peer.add(scriptButtonPanel.peer, BorderLayout.PAGE_START)
+
+      layout(new BorderPanel() {
+        layout(new SplitPane(Orientation.Horizontal,
+          swing.Component.wrap(spScript), spErrorMessage)) =
+            BorderPanel.Position.Center
+      }) = BorderPanel.Position.Center
+    }
+
     val num = factory.getModel.getInputPortRoles.length
     columnTables = Array.ofDim[Table](num)
-    val inputColumnsPanel = new BorderPanel()
-    inputColumnsPanel.peer.setLayout(
-      new BoxLayout(inputColumnsPanel.peer, BoxLayout.PAGE_AXIS))
-    if (num > 0) inputColumnsPanel.minimumSize = new Dimension(20, 150)
-    for (i <- 0 until num) {
-      inputColumnsPanel.peer.add(addColumnPane("Input[%d] columns: ".format(i), i).peer)
+    val inputColumnsPanel = new BorderPanel() {
+      peer.setLayout(
+        new BoxLayout(peer, BoxLayout.PAGE_AXIS))
+      if (num > 0) minimumSize = new Dimension(20, 150)
+      for (i <- 0 until num) {
+        contents.add(addColumnPane("Input[%d] columns: ".format(i), i))
+      }
     }
     val flowVariablesPanel = addFlowVariablesPane("Flow variables: ")
-    splitPane = new SplitPane(Orientation.Horizontal,
-      inputColumnsPanel, flowVariablesPanel)
-    splitPane.dividerLocation  = splitPane.size.height
-                               - splitPane.peer.getInsets().bottom
-                               - splitPane.dividerSize - 50
+    val splitPane = new SplitPane(Orientation.Horizontal,
+      inputColumnsPanel, flowVariablesPanel) {
+         dividerLocation  = size.height
+                          - peer.getInsets().bottom
+                          - dividerSize - 50
+    }
 
-    scriptPanel.peer.add(scriptButtonPanel.peer, BorderLayout.PAGE_START)
-    scriptPanel.peer.add(scriptMainPanel.peer, BorderLayout.CENTER)
-    val config_and_sript = new SplitPane(Orientation.Vertical, splitPane, scriptPanel)
-    config_and_sript.dividerLocation = 200
+    val config_and_sript = 
+      new SplitPane(Orientation.Vertical, splitPane, scriptPanel) {
+        dividerLocation = 200
+    }
     addTab("Script", config_and_sript.peer, false)
   }
 
@@ -234,42 +225,41 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
    * @return JPanel
    */
   private def addColumnPane(label: String, index: Int): Panel = {
-    val panel = new BorderPanel()
-    val table = new Table() {
-      model = new ScriptNodeOutputColumnsTableModel() {
-        addColumn("Column name")
-        addColumn("Column type")
-        setReadOnly(true)
-      }
-      autoResizeMode = (Table.AutoResizeMode.LastColumn)
-      listenTo(mouse.clicks)
-      reactions += {
-        case e: MousePressed =>
-          if (e.clicks == 2) {
-            val table = e.source.asInstanceOf[Table]
-            val row = table.peer.rowAtPoint(e.point)
-            if (row >= 0) {
-              var name = table.model.getValueAt(row, 0).toString
-              if (name.length > 0) {
-                name = name.replaceAll("[^\\p{Alnum}]", "_")
-                  .replaceAll("\\_+", "_")
-                if (name.charAt(name.length - 1) == '_')
-                  name = name.substring(0, name.length - 1)
-                scriptTextArea.insert(
-                  TEMPLATE_COLUMN_NAME.format(index, name),
-                  scriptTextArea.getCaretPosition)
+    new BorderPanel() {
+      val table = new Table() {
+        model = new ScriptNodeOutputColumnsTableModel() {
+          addColumn("Column name")
+          addColumn("Column type")
+          setReadOnly(true)
+        }
+        autoResizeMode = (Table.AutoResizeMode.LastColumn)
+        listenTo(mouse.clicks)
+        reactions += {
+          case e: MousePressed =>
+            if (e.clicks == 2) {
+              val table = e.source.asInstanceOf[Table]
+              val row = table.peer.rowAtPoint(e.point)
+              if (row >= 0) {
+                var name = table.model.getValueAt(row, 0).toString
+                if (name.length > 0) {
+                  name = name.replaceAll("[^\\p{Alnum}]", "_")
+                    .replaceAll("\\_+", "_")
+                  if (name.charAt(name.length - 1) == '_')
+                    name = name.substring(0, name.length - 1)
+                  scriptTextArea.insert(
+                    TEMPLATE_COLUMN_NAME.format(index, name),
+                    scriptTextArea.getCaretPosition)
+                }
               }
             }
-          }
+        }
       }
+
+      //table.setFillsViewportHeight(true)
+      layout(new Label(label)) = BorderPanel.Position.North
+      layout(new ScrollPane(table)) = BorderPanel.Position.Center
+      columnTables(index) = table
     }
-    
-    val scrollPane = new ScrollPane(table)
-    //table.setFillsViewportHeight(true)
-    panel.peer.add(new Label(label).peer, BorderLayout.NORTH)
-    panel.peer.add(scrollPane.peer, BorderLayout.CENTER)
-    columnTables(index) = table
-    panel
   }
 
   private def updateColumnTable(specs: Array[DataTableSpec]) {
@@ -290,36 +280,36 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
    * @return JPanel
    */
   private def addFlowVariablesPane(label: String): Panel = {
-    val flowVariablesPanel = new BorderPanel()
-    val table = new Table() {
-      model = new ScriptNodeOutputColumnsTableModel() {
-        addColumn("Name")
-        addColumn("Value")
-        setReadOnly(true)
-      }
-      listenTo(mouse.clicks)
-      reactions += {
-        case event: MouseClicked =>
-          if (event.clicks == 2) {
-            val table = event.source.asInstanceOf[Table]
-            val row = table.peer.rowAtPoint(event.point)
-            if (row >= 0) {
-              scriptTextArea.insert(String.format(TEMPLATE_FLOW_VAR,
-                table.model.getValueAt(row, 0).toString),
-                scriptTextArea.getCaretPosition)
+    new BorderPanel() {
+      val table = new Table() {
+        model = new ScriptNodeOutputColumnsTableModel() {
+          addColumn("Name")
+          addColumn("Value")
+          setReadOnly(true)
+        }
+        listenTo(mouse.clicks)
+        reactions += {
+          case event: MouseClicked =>
+            if (event.clicks == 2) {
+              val table = event.source.asInstanceOf[Table]
+              val row = table.peer.rowAtPoint(event.point)
+              if (row >= 0) {
+                scriptTextArea.insert(String.format(TEMPLATE_FLOW_VAR,
+                  table.model.getValueAt(row, 0).toString),
+                  scriptTextArea.getCaretPosition)
+              }
             }
-          }
+        }
       }
+      factory.getModel.getAvailableFlowVariables
+        .values.foreach(
+          varDescr => table.addRow(varDescr.getName, varDescr.getStringValue)
+        )
+
+      //table.setFillsViewportHeight(true)
+      layout(new Label(label)) = BorderPanel.Position.North
+      layout(new ScrollPane(table)) = BorderPanel.Position.Center
     }
-    factory.getModel.getAvailableFlowVariables
-      .values.foreach(
-        varDescr => table.addRow(varDescr.getName, varDescr.getStringValue)
-    )
-    val scrollPane = new ScrollPane(table)
-    //table.setFillsViewportHeight(true)
-    flowVariablesPanel.peer.add(new Label(label).peer, BorderLayout.NORTH)
-    flowVariablesPanel.peer.add(scrollPane.peer, BorderLayout.CENTER)
-    flowVariablesPanel
   }
 
   /* (non-Javadoc)
@@ -395,5 +385,18 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     errorMessage.text = ""
     scriptPanel.revalidate()
     scriptPanel.repaint()
+  }
+
+  private def createButtonForRowsMoving(title: String, func: (Seq[Int]) => Seq[Int]): Button = {
+    new Button(title) {
+      reactions += {
+        case ButtonClicked(b) =>
+          val selectedRows = table.selection.rows
+          logger.debug("selectedRows = " + selectedRows)
+          if (selectedRows.size > 0) {
+            table.selection.rows ++= func(selectedRows.toSeq)
+          }
+      }
+    }
   }
 }
