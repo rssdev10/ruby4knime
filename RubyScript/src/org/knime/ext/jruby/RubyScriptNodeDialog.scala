@@ -200,16 +200,13 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
         new BoxLayout(peer, BoxLayout.PAGE_AXIS))
       if (num > 0) minimumSize = new Dimension(20, 150)
       for (i <- 0 until num) {
-        contents.add(addColumnPane("Input[%d] columns: ".format(i), i))
+        peer.add(addColumnPane("Input[%d] columns: ".format(i), i).peer)
       }
+      visible = true
     }
     val flowVariablesPanel = addFlowVariablesPane("Flow variables: ")
     val splitPane = new SplitPane(Orientation.Horizontal,
-      inputColumnsPanel, flowVariablesPanel) {
-         dividerLocation  = size.height
-                          - peer.getInsets().bottom
-                          - dividerSize - 50
-    }
+      inputColumnsPanel, flowVariablesPanel)
 
     val config_and_sript = 
       new SplitPane(Orientation.Vertical, splitPane, scriptPanel) {
