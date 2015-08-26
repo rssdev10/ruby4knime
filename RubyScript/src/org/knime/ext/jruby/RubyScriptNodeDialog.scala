@@ -89,6 +89,22 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
         addRow("script output " + columnCounter, "String")
       }
       columnCounter += 1
+
+      val typeSelector =
+        new ComboBox[String](Seq(
+            "String",
+            "Integer",
+            "Double" )) {
+          makeEditable
+        }
+
+      override def editor(row: Int, column: Int) = {
+        column match {
+          case 1 => new DefaultCellEditor(
+              typeSelector.peer.asInstanceOf[JComboBox[String]])
+          case _ => null
+        }
+      }
     }
 
     val outputPanel = new BoxPanel(Orientation.Vertical) {
@@ -134,13 +150,6 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
         layout(table) = BorderPanel.Position.Center
       }
     }
-    val typeColumn = table.peer.getColumnModel.getColumn(1)
-    val typeSelector: ComboBox[String] =
-      new ComboBox[String](Seq("String", "Integer","Double")) { 
-       makeEditable
-    }
-    typeColumn.setCellEditor(new DefaultCellEditor(
-        typeSelector.peer.asInstanceOf[JComboBox[String]]))
     addTab("Script Output", outputPanel.peer)
   }
 
