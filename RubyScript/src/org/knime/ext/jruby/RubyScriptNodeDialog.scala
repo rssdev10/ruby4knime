@@ -7,7 +7,6 @@ import java.awt.event._
 import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.DefaultCellEditor
-import javax.swing.JFileChooser
 import javax.swing.JComboBox
 import javax.swing.table.TableColumn
 import javax.swing.table.TableCellEditor
@@ -33,6 +32,7 @@ import scala.swing._
 import scala.swing.event._
 import scala.swing.Table
 import scala.swing.Container
+import scala.swing.FileChooser
 
 /**
  * <code>NodeDialog</code> for the "JRuby Script" Node.
@@ -69,7 +69,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
 
   private var columnTables: Array[Table] = _
 
-  private val fileChooser = new JFileChooser()
+  private val fileChooser = new FileChooser()
 
   createColumnSelectionTab()
 
@@ -179,9 +179,9 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
         layout(new Button("Load Script from File") {
           reactions += {
             case ButtonClicked(b) =>
-              val returnVal = fileChooser.showOpenDialog(b.peer)
-              if (returnVal == JFileChooser.APPROVE_OPTION) {
-                val file = fileChooser.getSelectedFile
+              val returnVal = fileChooser.showOpenDialog(b)
+              if (returnVal == FileChooser.Result.Approve) {
+                val file = fileChooser.selectedFile
                 if (file.exists()) {
                   val file_content = scala.io.Source.fromFile(file, "utf-8").mkString
                   scriptTextArea.setText(file_content)
@@ -193,7 +193,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
 
         layout(new Label("Ruby Script")) = BorderPanel.Position.Center
       }
-      peer.add(scriptButtonPanel.peer, BorderLayout.PAGE_START)
+      layout(scriptButtonPanel) = BorderPanel.Position.North
 
       layout(new BorderPanel() {
         layout(new SplitPane(Orientation.Horizontal,
