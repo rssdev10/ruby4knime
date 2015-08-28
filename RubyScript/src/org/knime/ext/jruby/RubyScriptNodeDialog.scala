@@ -2,15 +2,14 @@ package org.knime.ext.jruby
 
 import java.awt.BorderLayout
 import java.awt.Color
-import java.awt.event._
 
-import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.DefaultCellEditor
 import javax.swing.JComboBox
-import javax.swing.table.TableColumn
-import javax.swing.table.TableCellEditor
 import javax.swing.text.BadLocationException
+import javax.swing.event.DocumentListener
+import javax.swing.event.DocumentEvent
+import javax.swing.Icon
 
 import org.knime.core.data.DataColumnSpec
 import org.knime.core.data.DataTableSpec
@@ -30,9 +29,6 @@ import scala.collection.convert.WrapAsScala.enumerationAsScalaIterator
 
 import scala.swing._
 import scala.swing.event._
-import scala.swing.Table
-import scala.swing.Container
-import scala.swing.FileChooser
 
 /**
  * <code>NodeDialog</code> for the "JRuby Script" Node.
@@ -70,6 +66,8 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
   private var columnTables: Array[Table] = _
 
   private val fileChooser = new FileChooser()
+
+  private var changed = false
 
   createColumnSelectionTab()
 
@@ -168,6 +166,11 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
       setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_RUBY)
       setCodeFoldingEnabled(true)
       setAntiAliasingEnabled(true)
+      getDocument().addDocumentListener(new DocumentListener() {
+        def insertUpdate(e: DocumentEvent) { changed = true }
+        def removeUpdate(e: DocumentEvent) { changed = true }
+        def changedUpdate(e: DocumentEvent) { changed = true }
+      });
     }
 
     val spScript = new RTextScrollPane(scriptTextArea) {
@@ -358,6 +361,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
       table.addRow(dataTableColumnNames(i), dataTableColumnTypes(i))
     }
     updateColumnTable(specs)
+    changed = false;
   }
 
   /* (non-Javadoc)
@@ -380,6 +384,7 @@ class RubyScriptNodeDialog(private var factory: RubyScriptNodeFactory)
     settings.addStringArray(RubyScriptNodeModel.COLUMN_NAMES, columnNames: _*)
     val columnTypes = table.getDataTableColumnTypes
     settings.addStringArray(RubyScriptNodeModel.COLUMN_TYPES, columnTypes: _*)
+    changed = false;
   }
 
   /**
