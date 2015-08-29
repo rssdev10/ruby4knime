@@ -47,5 +47,11 @@ jruby_zip = 'jruby.zip'
 
 # ****************** download jruby ***********************
 download JRUBY_SRC, jruby_zip
-`unzip -j #{jruby_zip} jruby-9.0.0.0/lib/jruby.jar`
+
+jruby_lib = "jruby-#{VERSION}/lib/"
+#`unzip -j #{jruby_zip} #{jruby_lib}/jruby.jar`
+`unzip #{jruby_zip}`
+%w(ruby jruby.jar).each { |file| `mv -v #{jruby_lib + file} ./` }
+
 File.delete jruby_zip
+`rm -r jruby-#{VERSION}`
