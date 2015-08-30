@@ -110,6 +110,21 @@ class RubyScriptNodeModel (
 #
 """
 
+  protected val templateCellAccess =
+"""#
+# For access to a cell of rows use symbolyzed names of columns.
+#    All non letter/number symbols of a input column name are changed to underline symbol.
+#    Names are converted in downcase. For input 0 only use direct short names. For more
+#    then one input use a following format: i#{input_num}_translated_column_name
+# Example:
+#    iter = FlowVariableList['currentIteration'] # read loop iterator value
+#    $in_data_0.each do |row|                    # for all data of input 0
+#      $out_data_0 << (row << # add existing row with all columns
+#        (Cells.new.int(row.data1.to_i + iter))) # add new col. from 'data1' col. plus iter
+#    end
+#
+"""
+
   protected val templateSnippet =
 """#
 # Snippet intended for operations with one row.
@@ -184,6 +199,9 @@ end
   }
 
   buffer ++= templateFlowVar
+
+  if (numInputs > 0)
+    buffer ++= templateCellAccess
 
   buffer ++= (snippetMode match {
     case true => templateSnippet
