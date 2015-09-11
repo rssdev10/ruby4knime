@@ -228,16 +228,15 @@ end
     val fileSep = System.getProperty("file.separator")
     val core = Platform.getBundle("org.knime.core")
     val coreClassPath = core.getHeaders.get("Bundle-Classpath").toString
-    val corePluginPath = FileLocator.resolve(FileLocator.find(core, new Path("."), null)).getPath
+    val corePluginPath = FileLocator.resolve(
+        FileLocator.find(core, new Path("."), null)).toURI().normalize().getPath
     val base = Platform.getBundle("org.knime.base")
     val baseClassPath = base.getHeaders.get("Bundle-Classpath").toString
-    val basePluginPath = FileLocator.resolve(FileLocator.find(base, new Path("."), null)).getPath
+    val basePluginPath = FileLocator.resolve(
+        FileLocator.find(base, new Path("."), null)).toURI().normalize().getPath
     val ruby = Platform.getBundle("org.knime.ext.jruby")
-    val rubyPluginPath = FileLocator.resolve(FileLocator.find(ruby, new Path("."), null)).getPath
-    val ext = new StringBuffer()
-    ext.append(basePluginPath + fileSep + "lib")
-    ext.append(corePluginPath + fileSep + "lib")
-    ext.append(getJavaExtDirsExtensionPath)
+    val rubyPluginPath = FileLocator.resolve(
+        FileLocator.find(ruby, new Path("."), null)).toURI().normalize().getPath
 
     val classpath = ArrayBuffer[String]()
     classpath ++= coreClassPath.split(",").view
@@ -249,12 +248,15 @@ end
       .map(s => FileLocator.find(base, new Path(s), null)).filter(_ != null)
       .foreach { u => classpath.add(FileLocator.resolve(u).getFile) }
 
-    classpath += basePluginPath + fileSep + "bin"
+    classpath += basePluginPath + "bin"
     classpath += getJavaClasspathExtensionPath
     if (RubyScriptNodePlugin.getDefault.getPreferenceStore.getBoolean(PreferenceConstants.JRUBY_USE_EXTERNAL_GEMS)) {
       val str = RubyScriptNodePlugin.getDefault.getPreferenceStore.getString(PreferenceConstants.JRUBY_PATH)
       System.setProperty("jruby.home", str)
     }
+    // jruby 9000 gems support
+    classpath += rubyPluginPath + "lib" + fileSep + "ruby" + fileSep + "stdlib"
+
     var container = new ScriptingContainer(LocalContextScope.THREADSAFE)
     //container.setCompatVersion(CompatVersion.RUBY2_0)
     container.setCompileMode(CompileMode.JIT)
