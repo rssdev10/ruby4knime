@@ -23,7 +23,7 @@ See [Ruby wrapper](RubyScript/rb/README.rdoc)
 ![Ruby4KNIME code tab](doc/pics/r4k_script.png)
 
 ## Installation
-[Download binary](releases/)
+[Download binary](../../releases/)
 
 See [changelog](CHANGELOG.md).
 
