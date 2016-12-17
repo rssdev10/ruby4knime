@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <description name="ruby4knime">
+   <description name="ruby4knime">This is Ruby for KNIME plugin.
    </description>
    <feature url="features/ruby4knime.feature_0.0.7.201509021915.jar" id="ruby4knime.feature" version="0.0.7.201509021915">
       <category name="ruby4knime"/>
