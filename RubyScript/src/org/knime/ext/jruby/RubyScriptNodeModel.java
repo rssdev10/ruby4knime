@@ -43,7 +43,6 @@ import org.osgi.framework.Bundle;
 
 import org.jruby.embed.ScriptingContainer;
 import org.jruby.javasupport.JavaEmbedUtils.EvalUnit;
-import org.jruby.CompatVersion;
 import org.jruby.embed.LocalContextScope;
 import org.jruby.RubyInstanceConfig.CompileMode;
 
@@ -286,9 +285,13 @@ public class RubyScriptNodeModel extends NodeModel {
         // Fails only first time!
         // ***********************************
 //        synchronized(m_ScriptingContainerLock){
+
+        // jruby 9000 gems support
+        classpath.add(rubyPluginPath + "lib" + fileSep + "ruby" + fileSep + "stdlib");
+
         container = new ScriptingContainer(
                 LocalContextScope.THREADSAFE);
-        container.setCompatVersion(CompatVersion.RUBY2_0);
+        //container.setCompatVersion(CompatVersion.RUBY2_0);
         container.setCompileMode(CompileMode.JIT);
 
         // Code for classpath inherited from jythonscript. It`s possible
