@@ -3,15 +3,15 @@
       id="ruby4knime.feature"
       label="Ruby Scripting Extension"
       version="0.0.8.qualifier"
-      license-feature="org.eclipse.platform"
-      license-feature-version="3.7.2.v20120207-1839-9gF7UHPDFxGjd-PqDr2jX_4yKaumkoHTz04_q-q">
+      license-feature="org.eclipse.platform.source"
+      license-feature-version="4.6.1.v20160907-1200">
 
    <description url="https://github.com/rssdev10/ruby4knime">
       This is Ruby scripting extension for KNIME.
    </description>
 
    <copyright>
-      rss, 2014, 2015
+      rss, 2014, 2015, 2016
    </copyright>
 
    <license url="http://www.apache.org/licenses/LICENSE-2.0">

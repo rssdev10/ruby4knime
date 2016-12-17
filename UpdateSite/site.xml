@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <description name="ruby4knime">This is Ruby for KNIME plugin.
+   <description name="ruby4knime">
+      This is Ruby for KNIME plugin.
    </description>
-   <feature url="features/ruby4knime.feature_0.0.7.201509021915.jar" id="ruby4knime.feature" version="0.0.7.201509021915">
+   <feature url="features/ruby4knime.feature_0.0.8.201612171919.jar" id="ruby4knime.feature" version="0.0.8.201612171919">
       <category name="ruby4knime"/>
    </feature>
-   <feature url="features/scala_library_2.10.1.201509021915.jar" id="scala_library" version="2.10.1.201509021915">
-      <category name="scala"/>
-   </feature>
    <category-def name="ruby4knime" label="Ruby4KNIME plugin"/>
-   <category-def name="scala" label="Scala runtime library"/>
 </site>
