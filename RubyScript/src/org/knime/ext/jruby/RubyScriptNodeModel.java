@@ -144,6 +144,11 @@ public class RubyScriptNodeModel extends NodeModel {
         buffer.append("#  Flow variables:\n");
         buffer.append("#     puts FlowVariableList['knime.workspace'] # reading \n");
         buffer.append("#     FlowVariableList['filename'] = '1.txt'   # writing \n");
+        buffer.append("#\n");
+
+        buffer.append("# Cells creation is available in old style with #string(), #int(), #double() methods\n");
+        buffer.append("# or in KNIME style:\n");
+        buffer.append("#   Cell.new.StringCell('str').IntegerCell(123).LongCell(2345).DoubleCell(1.2)\n");
         buffer.append("#\n#\n");
 
         if (m_snippetMode) {
@@ -154,6 +159,8 @@ public class RubyScriptNodeModel extends NodeModel {
                     + "# Example script. "
                     + "Add new two columns with String and Int types from current row:\n"
                     + "#   row << (Cells.new.string('Hi!').int(row.getCell(0).to_s.length))\n"
+                    + "# Or just create new cells if you don't want to combine them with existing ones:\n"
+                    + "#   Cells.new.string('Hi!').int(row.getCell(0).to_s.length)\n"
                     + "#\n");
 
             buffer.append("# Default snippet (copy existing row):\n");
