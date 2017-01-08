@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 
+import java.util.function.*;
+
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
@@ -144,41 +146,6 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
             }
         });
 
-        JButton upButton = new JButton("Up");
-        upButton.addActionListener(new ActionListener() {
-            public void actionPerformed(final ActionEvent e) {
-                int[] selectedRows = m_table.getSelectedRows();
-                logger.debug("selectedRows = " + selectedRows);
-
-                if (selectedRows.length == 0) {
-                    return;
-                }
-                ((ScriptNodeOutputColumnsTableModel) m_table.getModel())
-                        .moveRowsUp(selectedRows);
-            }
-        });
-
-        JButton downButton = new JButton("Down");
-        downButton.addActionListener(new ActionListener() {
-            public void actionPerformed(final ActionEvent e) {
-                int[] selectedRows = m_table.getSelectedRows();
-                logger.debug("selectedRows = " + selectedRows);
-
-                if (selectedRows.length == 0) {
-                    return;
-                }
-
-                ((ScriptNodeOutputColumnsTableModel) m_table.getModel())
-                        .moveRowsDown(selectedRows);
-            }
-        });
-
-        outputButtonPanel.add(addButton);
-        outputButtonPanel.add(removeButton);
-        outputButtonPanel.add(Box.createHorizontalStrut(40));
-        outputButtonPanel.add(upButton);
-        outputButtonPanel.add(downButton);
-
         m_table = new JTable();
         m_table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
@@ -189,6 +156,17 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         model.addRow("script output " + m_counter, "String");
         m_counter++;
         m_table.setModel(model);
+
+        JButton upButton = createButtonForRowsMoving("Up",
+                selectedRows -> model.moveRowsUp(selectedRows));
+        JButton downButton = createButtonForRowsMoving("Down",
+                selectedRows -> model.moveRowsDown(selectedRows));
+
+		outputButtonPanel.add(addButton);
+		outputButtonPanel.add(removeButton);
+		outputButtonPanel.add(Box.createHorizontalStrut(40));
+		outputButtonPanel.add(upButton);
+		outputButtonPanel.add(downButton);
 
         outputMainPanel.add(m_table.getTableHeader(), BorderLayout.PAGE_START);
         outputMainPanel.add(m_table, BorderLayout.CENTER);
@@ -562,4 +540,27 @@ public class RubyScriptNodeDialog extends NodeDialogPane {
         m_scriptPanel.revalidate();
         m_scriptPanel.repaint();
     }
+
+	protected JButton createButtonForRowsMoving(String title,
+			Function<int[], int[]> mover) {
+		JButton button = new JButton(title);
+		button.addActionListener(new ActionListener() {
+			public void actionPerformed(final ActionEvent e) {
+				int[] selectedRows = m_table.getSelectedRows();
+				logger.debug("selectedRows = " + selectedRows);
+
+				if (selectedRows.length == 0) {
+					return;
+				}
+
+				int[] selection = mover.apply(selectedRows);
+
+				m_table.addRowSelectionInterval(
+						selection[0],
+						selection[selection.length - 1]);
+			}
+		});
+
+		return button;
+	}
 }

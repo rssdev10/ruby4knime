@@ -88,19 +88,30 @@ public class ScriptNodeOutputColumnsTableModel extends AbstractTableModel {
         data = new ArrayList<ArrayList<Object>>();
     }
 
-    public final void moveRowsUp(int[] rows) {
-        for (int j = 0; j < rows.length; j++) {
-            if (rows[j] != 0)
-                Collections.swap(data, rows[j], rows[j] - 1);
-        }
-        fireTableDataChanged();
-    }
+	public final int[] moveRowsUp(int[] rows) {
+		int[] newSelection = rows.clone();
 
-    public final void moveRowsDown(int[] rows) {
-        for (int j = rows.length - 1; j >= 0; j--) {
-            if (rows[j] != data.size() - 1)
-                Collections.swap(data, rows[j], rows[j] + 1);
-        }
-        fireTableDataChanged();
-    }
+		if (rows[0] != 0) {
+			for (int j = 0; j < rows.length; j++) {
+				Collections.swap(data, rows[j], rows[j] - 1);
+				newSelection[j] -= 1;
+			}
+			fireTableDataChanged();
+		}
+
+		return newSelection;
+	}
+
+	public final int[] moveRowsDown(int[] rows) {
+		int[] newSelection = rows.clone();
+
+		if (rows[rows.length - 1] != data.size() - 1) {
+			for (int j = rows.length - 1; j >= 0; j--) {
+				Collections.swap(data, rows[j], rows[j] + 1);
+				newSelection[j] += 1;
+			}
+			fireTableDataChanged();
+		}
+		return newSelection;
+	}
 }
