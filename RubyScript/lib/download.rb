@@ -38,7 +38,7 @@ File.delete MVN_DESCR
 download(RSYNTAX_SRC + version + '/' + "rsyntaxtextarea-#{version}.jar",
          'rsyntaxtextarea.jar')
 
-VERSION = '9.1.6.0'
+VERSION = '9.2.7.0'
 JRUBY_SRC = 'https://s3.amazonaws.com/jruby.org/downloads/' \
             "#{VERSION}/jruby-bin-#{VERSION}.zip"
 jruby_zip = 'jruby.zip'

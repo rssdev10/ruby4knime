@@ -3,7 +3,7 @@
    <description name="ruby4knime">
       This is Ruby for KNIME plugin.
    </description>
-   <feature url="features/ruby4knime.feature_0.0.8.201612171919.jar" id="ruby4knime.feature" version="0.0.8.201612171919">
+   <feature url="features/ruby4knime.feature_0.0.9.201906031623.jar" id="ruby4knime.feature" version="0.0.9.201906031623">
       <category name="ruby4knime"/>
    </feature>
    <category-def name="ruby4knime" label="Ruby4KNIME plugin"/>
