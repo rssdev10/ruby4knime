@@ -3,9 +3,7 @@
     <name>Ruby Script</name>
 
     <shortDescription>
-      This package implements Ruby scripts.
-
-      Currently employs jRuby v1.7.9 with Ruby 2.0 syntax.
+      This node implements Ruby scripts. jRuby-based.
     </shortDescription>
 
     <fullDescription>

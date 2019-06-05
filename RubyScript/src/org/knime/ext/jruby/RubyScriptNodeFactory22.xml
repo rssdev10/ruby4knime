@@ -3,9 +3,7 @@
     <name>Ruby Script 2x2</name>
 
     <shortDescription>
-      This package implements Ruby scripts.
-
-      Currently employs jRuby v1.7.9 with Ruby 2.0 syntax.
+      This node implements Ruby scripts with 2 inputs and outputs. jRuby-based.
     </shortDescription>
 
     <fullDescription>

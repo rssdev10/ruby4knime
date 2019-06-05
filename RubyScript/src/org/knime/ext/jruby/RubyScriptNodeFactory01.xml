@@ -3,9 +3,7 @@
     <name>Ruby Data Generator</name>
 
     <shortDescription>
-      This node implements Ruby scripts for data generation only.
-
-      Currently employs jRuby v1.7.9 with Ruby 2.0 syntax.
+      This node implements Ruby scripts for data generation only. jRuby-based.
     </shortDescription>
 
     <fullDescription>
