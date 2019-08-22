@@ -1,4 +1,5 @@
-# coding: utf-8
+# frozen_string_literal: true
+
 require 'java'
 
 java_import org.knime.base.data.append.column.AppendedColumnRow
@@ -21,7 +22,6 @@ java_import org.knime.core.node.workflow.FlowVariable
 # for convinient Ruby script writing for KNIME
 # See also https://tech.knime.org/javadoc-api
 module Knime
-
   private # hide methods from subclasses of Object class
 
   # This module defines a container for columns for using it in
@@ -57,7 +57,7 @@ module Knime
         add_cell rb_cls.new(val)
         self
       end
-    end    
+    end
   end
 
   # Instances of this class are intended for a columns container.
@@ -105,7 +105,7 @@ module Knime
     # Generate dynamic methods for accessing to cells by column name
     #   from BlobSupportDataRow.
     # All symbols except :word: are changed to underline symbol.
-    # For all names is created a pair of normal and downcased name. 
+    # For all names is created a pair of normal and downcased name.
     # For input 0 only is generated simple names. For all inputs methods has
     # a following format: i#{input_num}_translated_column_name
     #
@@ -114,7 +114,7 @@ module Knime
       table = $input_datatable_arr[i]
       col_names = table.getDataTableSpec.getColumnNames.map do |str|
         [(s1 = str.gsub(/[^[[:word:]]]/, '_').gsub(/\_+/, '_').chomp('_')),
-          s1.downcase].uniq
+         s1.downcase].uniq
       end
       col_names.each_with_index do |names, num|
         names.each do |name|
@@ -155,13 +155,14 @@ module Knime
   end
 
   def snippet_runner
-    count, step = $in_data_0.length, 0x2FF
+    count = $in_data_0.length
+    step = 0x2FF
     coef = step / count.to_f
     $in_data_0.each_with_index do |row, i|
       $out_data_0 << (yield row)
       setProgress "#{i * coef}%" if (i & step) == 0
     end
-  end  
+  end
 end
 
 include Knime
@@ -193,7 +194,7 @@ class Java::OrgKnimeCoreNode::BufferedDataTable
     getRowCount
   end
 
-  alias_method :size, :length
+  alias size length
 end
 
 # Extended knime class
@@ -215,7 +216,7 @@ class DataContainer
   # Add row in the data container.
   # Row can be copied from input data container or created.
   def <<(obj)
-    row = obj.kind_of?(Cells) ? createRowKey.new_row(obj) : obj
+    row = obj.is_a?(Cells) ? createRowKey.new_row(obj) : obj
 
     addRowToTable row
   end
@@ -229,7 +230,8 @@ class DataContainer
   # Return RowKey object
   def createRowKey
     @key ||= 0
-    key, @key = @key, @key + 1
+    key = @key
+    @key += 1
     RowKey.createRowKey key
   end
 end
