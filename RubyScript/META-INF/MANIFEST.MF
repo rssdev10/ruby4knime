@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Ruby Script Node extension for KNIME Workbench
 Bundle-SymbolicName: org.knime.ext.jruby; singleton:=true
-Bundle-Version: 0.0.9
+Bundle-Version: 0.0.10
 Bundle-ClassPath: rubyscript.jar,
  lib/rsyntaxtextarea.jar,
  lib/jruby.jar

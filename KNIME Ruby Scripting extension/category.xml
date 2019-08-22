@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/ruby4knime.feature_0.0.9.qualifier.jar" id="ruby4knime.feature" version="0.0.9.qualifier">
+   <feature url="features/ruby4knime.feature_0.0.10.qualifier.jar" id="ruby4knime.feature" version="0.0.10.qualifier">
       <category name="ruby_scripting_extension"/>
    </feature>
    <category-def name="ruby_scripting_extension" label="KNIME Ruby scripting extension"/>
