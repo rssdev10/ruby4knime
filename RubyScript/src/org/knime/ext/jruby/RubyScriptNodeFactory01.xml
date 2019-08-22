@@ -8,11 +8,11 @@
 
     <fullDescription>
         <intro>
-        	Executes a jRuby script, returning 1 output DataTable. This node allow to generate any data or process data from external sources like files, RSS-feeds, HTTP and other Ruby-sources.
+            Executes a jRuby script, returning 1 output DataTable. This node allows generating any data or do reading of data from external sources like files, RSS-feeds, HTTP and other Ruby-readable sources.
         	A simple example script is included in the dialog's text window of the Script tab.
           <p>This node uses Ruby-wrapper. See knime.rb at <a href="https://github.com/rssdev10/ruby4knime">ruby4knime</a></p>
 
-          <p>Also you can include additional gems from an external jRuby installation. But before setup jRuby path in preferences.</p>
+          <p>Also, you can include additional gems from an external jRuby installation. But before that do setup jRuby path in preferences.</p>
           <p>Please specify Column list before using.</p>
        </intro>
 

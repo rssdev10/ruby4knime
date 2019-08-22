@@ -10,12 +10,12 @@
         <intro>Executes a small jRuby script. The main difference between this node and Ruby Script is that it operates with each row of input DataTable separately and returns a new row for output DataTable. A simple example script is included in the dialog's text window of the Script tab.
           <p>This node uses Ruby-wrapper. See knime.rb at <a href="https://github.com/rssdev10/ruby4knime">ruby4knime</a></p>
 
-          <p>Also you can include additional gems from an external jRuby installation. But before setup jRuby path in preferences.</p>
+          <p>Also, you can include additional gems from an external jRuby installation. But before that do setup jRuby path in preferences.</p>
 
        </intro>
 
         <tab name="Script output">
-          <option name="Append columns to input table spec">If checked, the columns as given in the list are appended to the input table specification, i.e. the number of columns in the output table equals the number of input columns plus the number of columns as given in the list. If unchecked, the output table will have as many columns as given in the list.</option>
+          <option name="Append columns to input table spec">If checked, the columns as given in the list are appended to the input table specification. The number of columns in the output table equals the number of input columns plus the number of columns as given in the list. If unchecked, the output table will have exactly the same number of columns as given in the list.</option>
           <option name="Column list">Specify the column name and type of all result columns. After adding a new column, click on the name or type to change its value.</option>
         </tab>
 
